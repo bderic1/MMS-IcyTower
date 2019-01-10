@@ -1,0 +1,2 @@
+10.1. [Bojana] Ne znam želimo li napraviti skroz identièan poèetni zaslon kao u originalu, ako da, onda osim slike èovjeèuljka koju bi moja poèetna verzija(od neèeg moramo poèeti) 
+još trebala, treba napraviti i sliku natpisa Icy Tower jer nisam sigurna postoji li neka metoda da napravimo baš onaj efekt na slovima koji treba plus odgovarajuæu pozadinu.

@@ -1,2 +1,3 @@
-10.1. [Bojana] Ne znam elimo li napraviti skroz identièan poèetni zaslon kao u originalu, ako da, onda osim slike èovjeèuljka koju bi moja poèetna verzija(od neèeg moramo poèeti) 
-još trebala, treba napraviti i sliku natpisa Icy Tower jer nisam sigurna postoji li neka metoda da napravimo baš onaj efekt na slovima koji treba plus odgovarajuæu pozadinu.
+10.1. [Bojana] Ne znam Å¾elimo li napraviti skroz identiÄan poÄetni zaslon kao u originalu, ako da, onda osim slike ÄovjeÄuljka koju bi moja poÄetna verzija(od neÄeg moramo poÄeti) 
+joÅ¡ trebala, treba napraviti i sliku natpisa Icy Tower jer nisam sigurna postoji li neka metoda da napravimo baÅ¡ onaj efekt na slovima koji treba plus odgovarajuÄ‡u pozadinu.
+11.1.[Bojana] PoÄela sam sa skakanjem gore-dolje. ÄŒak izgleda u redu, ali problem je Å¡to radi samo kada drÅ¾im space, nisam ga uspjela joÅ¡ naÅ¡timati da radi lijepo s jednim klikom. Mislim da je definitivno fizika najveÄ‡i problem ovog projekta. Bit Ä‡e veselo.

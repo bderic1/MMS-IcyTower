@@ -6,6 +6,9 @@
 int stanje=0, var=0; 
 PFont font; 
 PImage bg, harold;
+float harx, hary;
+float gravitacija=1; 
+float brzinaVert=0; 
 void setup()
 {
   size(900, 900);
@@ -13,7 +16,8 @@ void setup()
   colorMode(HSB);
   noStroke();
   harold=loadImage("harold.jpg");
-  
+  harx=width/2-30;
+  hary=height-70;
   
 }
 void draw()
@@ -51,8 +55,10 @@ void pocetni_screen()
 }
 void igra_screen()
 {  
+  
   background(0);
-  image(harold,width/2-harold.width/2, height-harold.height);
+  harold.resize(60,70);
+  image(harold, harx, hary);
 
 }
 void kraj_screen()
@@ -64,5 +70,26 @@ void keyPressed()
 {
 if(stanje==0)
   stanje=1; 
-  
+if(stanje==1)
+  {
+      if(key==' ')
+        {
+            jump();
+        }
+  }
+}
+void jump()
+{
+  brzinaVert+=gravitacija;
+  hary-=brzinaVert; 
+  if(hary>height)
+    {
+      hary=height-harold.height/2; 
+      brzinaVert*=-1; 
+    }
+  if(hary-harold.height<height/2)
+    {
+      hary=height/2+harold.height; 
+      brzinaVert*=-1; 
+    }
 }

@@ -7,7 +7,7 @@ int stanje=0, var=0;
 PFont font; 
 PImage bg, harold;
 float harx, hary;
-float ax=0,ay=.32; 
+float ax=.32,ay=.32; 
 float vx=0, vy=0; 
 boolean can_jump=false; 
 void setup()
@@ -89,6 +89,21 @@ if(stanje==1)
          vy=-10; 
          can_jump=false; 
        }
+     //ako su pritisnute tipke za lijevo i desno, one su CODED pa moramo ovako
+     //izvršavati provjeru
+     if(key==CODED)
+       {
+         if(keyCode==LEFT)
+         { 
+           vx-=10;
+           harx+=vx;
+         }
+         if(keyCode==RIGHT)
+         { 
+           vx+=10;
+           harx+=vx;
+         }
+       }
   }
 }
 void jump()
@@ -112,8 +127,8 @@ void keep_in_screen()
    if(hary-harold.height<0)
       hary=harold.height; 
    //moramo mu zabraniti i da iziđe izvan lijevih i desnih rubova
-   if(harx-harold.width<0)
-   harx=harold.width;
+   if(harx<0)
+     harx=0;
    if(harx+harold.width>width)
    harx=width-harold.width;
       

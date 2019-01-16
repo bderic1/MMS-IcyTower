@@ -1,3 +1,5 @@
 10.1. [Bojana] Ne znam želimo li napraviti skroz identičan početni zaslon kao u originalu, ako da, onda osim slike čovječuljka koju bi moja početna verzija(od nečeg moramo početi) 
 još trebala, treba napraviti i sliku natpisa Icy Tower jer nisam sigurna postoji li neka metoda da napravimo baš onaj efekt na slovima koji treba plus odgovarajuću pozadinu.
 11.1.[Bojana] Počela sam sa skakanjem gore-dolje. Čak izgleda u redu, ali problem je što radi samo kada držim space, nisam ga uspjela još naštimati da radi lijepo s jednim klikom. Mislim da je definitivno fizika najveći problem ovog projekta. Bit će veselo.
+16.1.[Bojana] Skakanje gore dolje je donekle ok, ako padne ispod neke razine pojavljuje se game over screen.
+Iduće mislim da bi trebalo biti kretanje lijevo desno, ili napraviti kocke po kojima skačemo.

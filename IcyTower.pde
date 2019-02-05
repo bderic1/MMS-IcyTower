@@ -10,27 +10,72 @@ float ax=.32, ay=.32;
 Screen mainScreen;
 Character player;
 
+class Platform {
+   float x, y, w, h  = 20; // Points of the platform;
+   
+   Platform(float _x, float _y, float _w)
+   {
+     x = _x;
+     y = _y;
+     w = _w;
+   }
+   
+   boolean isOnPlatform(float posx, float posy) { // Width i height nam ne trebaju jer ih mi namjestamo na 60, odnosno 70
+      if( posy + 70  > y + h - 5 && posy + 70  < y + h + 5 && // Provjeravamo prvo visinu i dajemo 5 pixela prostora za gresku (kao hitbox platforme) 
+          posx + 60 > x && posx < x + w ) // Provjeravamo je li lijevi rub lika lijevo od desnog ruba platforme i desni rub lika desno od lijevog ruba platforme
+      {
+        return true;
+      }
+      else
+        return false;
+   }
+   
+   void draw(){
+     rect(x, y, w, h);
+   }
+   
+   void reduceHeight(float amount) {
+     y -= amount;
+   }
+   
+}
+
 class Screen {
-  float speed;
+  private float speed;
+  private ArrayList<Platform> platforms;
   Screen() {
     speed = 0;
+  }
+  
+  void draw() { // Imat ćemo 5 platformi najviše u isto vrijeme
+    
+  }
+  
+  void updatePlatforms() {
+    
+  }
+  
+  ArrayList<Platform> getPlatforms()
+  {
+    return platforms;
   }
 }
 
 
 class Character {
-  float posx, posy;
-  float vx=0, vy=0; 
-  PImage sprite;
-  float speed;
-  boolean onGround=false;
+  private float posx, posy;
+  private float vx=0, vy=0; 
+  private PImage sprite;
+  private float speed;
+  private int run = 1;
+  private boolean onGround=false;
   Screen screen;
 
   Character( Screen scr ) {
     screen = scr;
     posx = width/2-30;
     posy = height-70;
-    sprite=loadImage("harold.jpg");
+    sprite=loadImage("harold-standing.png");
     sprite.resize(60, 70);
   }
 
@@ -44,10 +89,11 @@ class Character {
       vy=0; 
       onGround=true;
     }
-    
+
     //ako smo stisli space i nismo u letu, nego smo na površini(onGround==true, onda skacemo
     if (keyPressed && key==' ' && onGround)
     {
+      sprite=loadImage("harold-jumping.png");
       vy=-10; 
       onGround=false;
     }
@@ -59,23 +105,41 @@ class Character {
     //izvršavati provjeru
     if (keyPressed && key==CODED)
     {
+      if (onGround)
+      {
+      }
       if (keyCode==LEFT)
       { 
         vx-=0.2;
-      }
-      else if (keyCode==RIGHT)
+      } else if (keyCode==RIGHT)
       { 
         vx+=0.2;
       }
-    }
-    else if(onGround)
+    } else if (onGround)
     {
       vx*=0.5;
     }
+    if (onGround)
+    {
+      if (vx == 0) { // Ako se ne krece i stoji na zemlji
+        sprite=loadImage("harold-standing.png");
+      } else {
+        String image = "harold-run-"+str(run/10);
+        run = (run+1)%40;
+        
+        if (vx < 0) { // Ako se krece lijevo
+          image += "-left";
+        }
+        
+        image += ".png";
+        sprite = loadImage(image);
+      }
+    }
+
     vx = constrain(vx, -10, 10);
     posx += vx;
   }
-  
+
   void keep_in_screen()
   {
     //ako haroldova dođe ispod visine, gotovi smo
@@ -96,14 +160,14 @@ class Character {
 
 void setup()
 {
-  Screen mainScreen = new Screen();
+  mainScreen = new Screen();
   player = new Character(mainScreen);
-
-  size(900, 900);
+  size(1024, 768);
   font=createFont("ComicSansMS-BoldItalic-48.vlw", 32);
   colorMode(HSB);
   noStroke();
 }
+
 void draw()
 {
   if (stanje==0)
@@ -139,12 +203,17 @@ void pocetni_screen()
 
 void igra_screen()
 {  
-  background(0);
-  image(player.sprite, player.posx, player.posy);
+  background(100);
   
+  mainScreen.draw();
+
   player.jump();
   player.move();
+  player.sprite.resize(60, 70);
   player.keep_in_screen();
+
+
+  image(player.sprite, player.posx, player.posy);
 }
 
 void kraj_screen()
@@ -160,10 +229,10 @@ void kraj_screen()
   text("OVER", height/2, width/3+220);
   textSize(20);
   text("Press 'space' to continue.", height/2, width/3+440);
-  
-  if(keyPressed && key == ' ') {
-      Screen mainScreen = new Screen();
-      player = new Character(mainScreen);
-      stanje = 1;
-    }
+
+  if (keyPressed && key == ' ') {
+    Screen mainScreen = new Screen();
+    player = new Character(mainScreen);
+    stanje = 1;
+  }
 }

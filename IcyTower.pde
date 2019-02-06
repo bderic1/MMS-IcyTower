@@ -21,7 +21,7 @@ class Platform {
    }
    
    boolean isOnPlatform(float posx, float posy) { // Width i height nam ne trebaju jer ih mi namjestamo na 60, odnosno 70
-      if( posy + 70  > y + h - 5 && posy + 70  < y + h + 5 && // Provjeravamo prvo visinu i dajemo 5 pixela prostora za gresku (kao hitbox platforme) 
+      if( posy + 70  > y - 3 && posy + 70  < y + 3 && // Provjeravamo prvo visinu 
           posx + 60 > x && posx < x + w ) // Provjeravamo je li lijevi rub lika lijevo od desnog ruba platforme i desni rub lika desno od lijevog ruba platforme
       {
         return true;
@@ -30,7 +30,15 @@ class Platform {
         return false;
    }
    
+   boolean isOutOfBounds() {
+     if(y > height) {
+       return true;
+     }
+     return false;
+   }
+   
    void draw(){
+     fill(204, 102, 0);
      rect(x, y, w, h);
    }
    
@@ -43,15 +51,35 @@ class Platform {
 class Screen {
   private float speed;
   private ArrayList<Platform> platforms;
+  int noOfPlatforms = 7;
   Screen() {
     speed = 0;
+    platforms = new ArrayList<Platform>();
   }
   
   void draw() { // Imat ćemo 5 platformi najviše u isto vrijeme
-    
-  }
   
-  void updatePlatforms() {
+    for( Platform pl: platforms){
+      if(pl.isOutOfBounds()){
+        platforms.remove(pl);
+      }
+      else{
+        break;
+      }
+    }
+    
+    for(int i = 0; i < noOfPlatforms - platforms.size(); i++){ // Dodajemo platformi koliko fali
+      if(platforms.size() == 0) { // Najdonja platforma
+        platforms.add(new Platform(0, height-20, width));
+      }
+      else {
+        platforms.add(new Platform(100, platforms.get(platforms.size() - 1).y - (height/noOfPlatforms), 450));
+      }
+    }
+    
+    for( Platform pl: platforms){
+      pl.draw();
+    }
     
   }
   
@@ -74,7 +102,7 @@ class Character {
   Character( Screen scr ) {
     screen = scr;
     posx = width/2-30;
-    posy = height-70;
+    posy = height-90;
     sprite=loadImage("harold-standing.png");
     sprite.resize(60, 70);
   }
@@ -83,7 +111,7 @@ class Character {
   {
     vy+=ay;
     posy+=vy;
-    if (posy > height-sprite.height)
+    if (isOnGround())
     {
       //hary=height-harold.height; 
       vy=0; 
@@ -105,20 +133,19 @@ class Character {
     //izvršavati provjeru
     if (keyPressed && key==CODED)
     {
-      if (onGround)
-      {
-      }
       if (keyCode==LEFT)
       { 
-        vx-=0.2;
+        vx-=0.8;
       } else if (keyCode==RIGHT)
       { 
-        vx+=0.2;
+        vx+=0.8;
       }
     } else if (onGround)
     {
-      vx*=0.5;
+      vx*=0.2;
     }
+    
+    
     if (onGround)
     {
       if (vx == 0) { // Ako se ne krece i stoji na zemlji
@@ -154,6 +181,16 @@ class Character {
     if (posx+sprite.width>width)
       posx=width-sprite.width;
   }
+  
+  boolean isOnGround(){
+    for( Platform pl: screen.getPlatforms()){
+      if(pl.isOnPlatform(posx, posy))
+      {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 
@@ -163,7 +200,8 @@ void setup()
   mainScreen = new Screen();
   player = new Character(mainScreen);
   size(1024, 768);
-  font=createFont("ComicSansMS-BoldItalic-48.vlw", 32);
+  //font=createFont("ComicSansMS-BoldItalic-48.vlw", 32);
+  font = createFont("Georgia", 32);
   colorMode(HSB);
   noStroke();
 }

@@ -5,28 +5,26 @@
 
 import java.util.Iterator;
 
+boolean leftKeyPressed = false, rightKeyPressed = false, spaceKeyPressed = false;
+
 // Klasa u kojoj su podatci o samim platformama po kojima lik skace
 class Platform {
 
-    float x, y, w, h  = 20, platformNumber; // Points of the platform
+    float x, y, w, h  = 20; // Points of the platform
+    int platformNumber;
 
-    Platform(float _x, float _y, float _w)
+    Platform(float _x, float _y, float _w, int _platformNumber)
     {
         x = _x;
         y = _y;
         w = _w;
+        platformNumber = _platformNumber;
     }
 
-    boolean isOnPlatform(Character player) { // Width i height nam ne trebaju jer ih mi namjestamo na 60, odnosno 70
-        // if ( posy + 70  > y - 3 && posy + 70  < y + 3 && // Provjeravamo prvo visinu i dajemo 3 pixela za gresku
-        //     posx + 60 >= x && posx <= x + w ) // Provjeravamo je li lijevi rub lika lijevo od desnog ruba platforme i desni rub lika desno od lijevog ruba platforme
-        // {
-        //     return true;
-        // } else
-        //     return false;
-
+    boolean isOnPlatform(Character player) { 
         if(player.fallSpeed() < 0) return false; // Ako igrac ide prema gore onda ne pada na platformu 
 
+        // Width i height nam ne trebaju jer ih mi namjestamo na 60, odnosno 70
         if ( player.positionY() + 70 >= y - player.fallSpeed()  && player.positionY() + 70  <= y && // Provjeravamo hoce li igrac u sljedecem frameu biti na platformi
              player.positionX() + 60 >= x                       && player.positionX() <= x + w ) {
             player.setPositionY(y - 70); // Postavljamo igraca na platformu
@@ -39,10 +37,6 @@ class Platform {
 
     boolean isOutOfBounds() {
         return (y > height);
-        // if (y > height) {
-        //     return true;
-        // }
-        // return false;
     }
 
     void draw() {
@@ -60,7 +54,7 @@ class Screen {
 
     private float speed;
     private ArrayList<Platform> platforms;
-    int noOfPlatforms = 7;
+    private int noOfPlatforms = 7;
 
     Screen() {    
         speed = 0; // Pocetna brzina treba bit nula jer se platforme tek micu kada igrac skoci prvi kat
@@ -81,36 +75,18 @@ class Screen {
         if (platforms.size() == 0) {
             for (int i = 0; i < noOfPlatforms; i++) { // Dodajemo platformi koliko fali
                 if (i == 0) { // Najdonja platforma
-                    platforms.add(new Platform(0, height-20, width));
+                    platforms.add(new Platform(0, height-20, width, 1));
                 } else {
-                    platforms.add(new Platform(100, platforms.get(platforms.size() - 1).y - (height/noOfPlatforms), 450));
+                    platforms.add(new Platform(100, platforms.get(platforms.size() - 1).y - (height/noOfPlatforms), 450, i + 1));
                 }
             }
         } else if (platforms.get(0).isOutOfBounds()) { // Ako je najdonja platforma nestala onda nju izbacujemo iz liste i dodajemo novu platformu na vrh
             platforms.remove(0);
-            platforms.add(new Platform(100, platforms.get(platforms.size() - 1).y - (height/noOfPlatforms), 450));
+            Platform platformBefore = platforms.get(platforms.size() - 1);
+            int platNo = platformBefore.platformNumber + 1;
+            // Dodajemo novu platformu i ako je neki kat koji je djeljiv sa 100 onda je duzine cijelog ekrana
+            platforms.add(new Platform(100, platformBefore.y - (height/noOfPlatforms), (platNo%100 == 0) ? width : 450, platNo));
         }
-
-        // Vjerojatno je dovoljno samo provjeravat zadnju platformu (najnizu) i dodat samo jednu na vrh jer se ne bi trebali toliko brzo kretat da u jednom frame-u nestane vise
-        // od jedne platforme. Ovo sam prije pisao ali ostavljam cisto ako bude mogucnost da moze nestat vise od jedne platforme.
-        //// Brisemo platforme koje se vise ne vide
-        //Iterator<Platform> iter = platforms.iterator(); 
-        //while (iter.hasNext()) {
-        //    Platform pl = iter.next();
-
-        //    if (pl.isOutOfBounds())
-        //        iter.remove();
-        //    else
-        //        break;
-        //}
-
-        //for (int i = 0; i < noOfPlatforms - platforms.size(); i++) { // Dodajemo platformi koliko fali
-        //    if (platforms.size() == 0) { // Najdonja platforma
-        //        platforms.add(new Platform(0, height-20, width));
-        //    } else {
-        //        platforms.add(new Platform(100, platforms.get(platforms.size() - 1).y - (height/noOfPlatforms), 450));
-        //    }
-        //}
 
         for ( Platform pl : platforms) {
             pl.draw();
@@ -181,15 +157,16 @@ class Character {
         } else
         {
             vy+=ay;
+            onGround = false;
         }
 
         // TODO: SKakanje se jos uvijek ponavlja ako drzimo neki smjer i skakanje
         //ako smo stisli space i nismo u letu, nego smo na površini(onGround==true, onda skacemo
-        if (keyPressed && key==' ' && onGround)
+        if (spaceKeyPressed && onGround)
         {
             vy=-10; 
             onGround=false;
-            screen.setSpeed(1); // TODO: Odmaknit
+            // screen.setSpeed(1); // TODO: Odmaknit
         }
 
         // vy = constrain(vy, -10, 10);
@@ -201,17 +178,15 @@ class Character {
         // TODO: Popravit kretanje u lijevo i u desno
         //ako su pritisnute tipke za lijevo i desno, one su CODED pa moramo ovako
         //izvršavati provjeru
-        if (keyPressed && key==CODED)
+        if (leftKeyPressed)
         {
-            if (keyCode==LEFT)
-            { 
-                vx-=(vx > 0) ? 2*ax : ax;;
-            }
-            if (keyCode==RIGHT)
-            { 
-                vx+=(vx < 0) ? 2*ax : ax;
-            }
-        } else if (onGround)
+            vx-=(vx > 0) ? 2*ax : ax;
+        }
+        if (rightKeyPressed)
+        { 
+            vx+=(vx < 0) ? 2*ax : ax;
+        } 
+        if (onGround && !leftKeyPressed && !rightKeyPressed)
         {
             vx*=0.5;
         }
@@ -229,10 +204,10 @@ class Character {
         if (posy-sprite.height<0)
             posy=sprite.height; 
         //moramo mu zabraniti i da iziđe izvan lijevih i desnih rubova
-        if (posx<0)
-            posx=0;
-        if (posx+sprite.width>width)
-            posx=width-sprite.width;
+        posx = constrain(posx, 0, width-sprite.width);
+        // U letu odbijaj lika od zidova
+        if (!onGround && (posx == 0 || posx+sprite.width == width))
+            vx *= (-1);
     }
 
     boolean isOnGround() {
@@ -246,12 +221,10 @@ class Character {
     }
 
     void setSprite() {
+        String character = "harold";
         if (onGround)
         {
-            String character = "harold";
-            if (keyPressed && key==' ') {
-                sprite=loadImage(character + "-jumping.png");
-            } else if (vx < 1 & vx > -1) { // Ako se ne krece i stoji na zemlji
+            if (vx < 1 & vx > -1) { // Ako se ne krece i stoji na zemlji
                 sprite=loadImage(character + "-standing.png");
             } else {
                 String image = character + "-run-"+str(run/10);
@@ -264,8 +237,13 @@ class Character {
                 image += ".png";
                 sprite = loadImage(image);
             }
-        player.sprite.resize(60, 70);
+        
         }
+        else if (keyPressed && key==' ') 
+        {
+            sprite=loadImage(character + "-jumping.png");
+        }
+        player.sprite.resize(60, 70);
     }
 }
 
@@ -295,6 +273,40 @@ void draw()
         igra_screen(); 
     else if (stanje==2)
         kraj_screen();
+}
+
+void keyPressed(){
+    if (key==CODED)
+        {
+            if (keyCode==LEFT)
+            { 
+                leftKeyPressed = true;
+            }
+            if (keyCode==RIGHT)
+            { 
+                rightKeyPressed = true;
+            }
+        } else if (key == ' ')
+        {
+            spaceKeyPressed = true;
+        }
+}
+ 
+void keyReleased(){
+    if (key==CODED)
+        {
+            if (keyCode==LEFT)
+            { 
+                leftKeyPressed = false;
+            }
+            if (keyCode==RIGHT)
+            { 
+                rightKeyPressed = false;
+            }
+        } else if (key == ' ')
+        {
+            spaceKeyPressed = false;
+        }
 }
 
 void pocetni_screen()

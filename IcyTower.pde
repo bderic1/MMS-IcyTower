@@ -4,13 +4,13 @@
 //stanje==2 je game over screen
 
 import java.util.Iterator;
+import java.util.Map;
 
-boolean leftKeyPressed = false, rightKeyPressed = false, spaceKeyPressed = false;
 
 // Klasa u kojoj su podatci o samim platformama po kojima lik skace
 class Platform {
 
-    float x, y, w, h  = 20; // Points of the platform
+    float x, y, w, h  = 30; // Points of the platform
     int platformNumber;
 
     Platform(float _x, float _y, float _w, int _platformNumber)
@@ -42,6 +42,9 @@ class Platform {
     void draw() {
         fill(204, 102, 0);
         rect(x, y, w, h);
+        textSize(14);
+        fill(255);
+        text(str(platformNumber), x + w/2, y + h/2); 
     }
 
     void reduceHeight(float amount) {
@@ -85,7 +88,10 @@ class Screen {
             Platform platformBefore = platforms.get(platforms.size() - 1);
             int platNo = platformBefore.platformNumber + 1;
             // Dodajemo novu platformu i ako je neki kat koji je djeljiv sa 100 onda je duzine cijelog ekrana
-            platforms.add(new Platform(100, platformBefore.y - (height/noOfPlatforms), (platNo%100 == 0) ? width : 450, platNo));
+            platforms.add(new Platform((platNo%50 == 0) ? 0 : 100, platformBefore.y - (height/noOfPlatforms), (platNo%50 == 0) ? width : 450, platNo));
+            // Ako je platforma djeljiva sa 100 onda povećamo brzinu za 1
+            // TODO: Brzina se povećava ovisno o timeru a ne katu
+            if(platNo%100 == 0) speed++;
         }
 
         for ( Platform pl : platforms) {
@@ -110,6 +116,7 @@ class Screen {
     }
 }
 
+
 // Klasa sa kojom pokrecemo lika i u kojoj su spremljeni njeni podaci
 class Character {
 
@@ -117,15 +124,32 @@ class Character {
     private float vx=0, vy=0; 
     private PImage sprite;
     private int run = 1;
-    private boolean onGround=false;
+    private boolean onGround=false, firstJump = true;
     private Screen screen;
+    String character;
+    private HashMap<String, PImage> sprites;
 
-    Character( Screen scr ) {
+    Character( Screen scr, String _character) {
         screen = scr;
         posx = width/2-30;
         posy = height-90;
-        sprite=loadImage("harold-standing.png");
-        sprite.resize(60, 70);
+        sprites = new HashMap<String, PImage>();    
+        character = _character;
+        loadSprites();
+    }
+
+    void loadSprites() {
+        
+        sprites.put("standing", loadImage(character + "-standing.png"));
+        sprites.put("jumping",  loadImage(character + "-jumping.png"));
+        sprites.put("jumping-right", loadImage(character + "-jumping-right.png"));
+        sprites.put("jumping-left",  loadImage(character + "-jumping-left.png"));
+        sprites.put("falling-right", loadImage(character + "-falling-right.png"));
+        sprites.put("falling-left",  loadImage(character + "-falling-left.png"));
+        for(int i = 0; i < 4; ++i) {
+            sprites.put("run-" + str(i) + "-left",  loadImage(character + "-run-" + str(i) + "-left.png"));
+            sprites.put("run-" + str(i) + "-right", loadImage(character + "-run-" + str(i) + "-right.png"));
+        }
     }
 
     float positionX() {
@@ -160,13 +184,15 @@ class Character {
             onGround = false;
         }
 
-        // TODO: SKakanje se jos uvijek ponavlja ako drzimo neki smjer i skakanje
         //ako smo stisli space i nismo u letu, nego smo na površini(onGround==true, onda skacemo
         if (spaceKeyPressed && onGround)
         {
             vy=-10; 
             onGround=false;
-            // screen.setSpeed(1); // TODO: Odmaknit
+            if(firstJump) {
+                screen.setSpeed(1);
+                firstJump = false;
+            }
         }
 
         // vy = constrain(vy, -10, 10);
@@ -175,23 +201,21 @@ class Character {
 
     void move()
     {
-        // TODO: Popravit kretanje u lijevo i u desno
-        //ako su pritisnute tipke za lijevo i desno, one su CODED pa moramo ovako
-        //izvršavati provjeru
+        
         if (leftKeyPressed)
         {
-            vx-=(vx > 0) ? 2*ax : ax;
+            vx-=(vx > 0) ? 1.5*ax : ax;
         }
         if (rightKeyPressed)
         { 
-            vx+=(vx < 0) ? 2*ax : ax;
+            vx+=(vx < 0) ? 1.5*ax : ax;
         } 
         if (onGround && !leftKeyPressed && !rightKeyPressed)
         {
-            vx*=0.5;
+            vx*=0.9;
         }
 
-        vx = constrain(vx, -10, 10);
+        vx = constrain(vx, -15, 15);
         posx += vx;
     }
 
@@ -201,8 +225,9 @@ class Character {
         if (posy>=height-sprite.height/2)
             stanje=2; 
         //ako harold dođe do vrha, ne može ići više od toga
-        if (posy-sprite.height<0)
-            posy=sprite.height; 
+        // TODO: Mora biti mogućnost da ide više od vrha i vuče ekran sa sobom
+        if (posy <= 0)
+            posy=0; 
         //moramo mu zabraniti i da iziđe izvan lijevih i desnih rubova
         posx = constrain(posx, 0, width-sprite.width);
         // U letu odbijaj lika od zidova
@@ -221,29 +246,37 @@ class Character {
     }
 
     void setSprite() {
-        String character = "harold";
         if (onGround)
         {
-            if (vx < 1 & vx > -1) { // Ako se ne krece i stoji na zemlji
-                sprite=loadImage(character + "-standing.png");
+            if ( vx > -1 && vx < 1 ) { // Ako se ne krece i stoji na zemlji
+                sprite = sprites.get("standing");
             } else {
-                String image = character + "-run-"+str(run/10);
+                String image = "run-"+str(run/10);
                 run = (run+1)%40; // Mijenjamo sprite za trcanje svako 10 frameova
 
-                if (vx < 0) { // Ako se krece lijevo
-                    image += "-left";
-                }
+                image += (vx < 0) ? "-left" : "-right";
 
-                image += ".png";
-                sprite = loadImage(image);
+                sprite = sprites.get(image);
             }
         
         }
-        else if (keyPressed && key==' ') 
+        else
         {
-            sprite=loadImage(character + "-jumping.png");
+            if ( vx > -1 && vx < 1 ) 
+            { // Ako se ne krece desno ili lijevo
+                sprite = sprites.get("jumping");
+            } 
+            else 
+            {
+                String image = (vy < 0) ? "jumping" : "falling";
+
+                image += (vx < 0) ? "-left" : "-right";
+
+                sprite = sprites.get(image);
+            }
+            
         }
-        player.sprite.resize(60, 70);
+        sprite.resize(60, 70);
     }
 }
 
@@ -253,11 +286,13 @@ PImage bg;
 float ax=.32, ay=.32;
 Screen mainScreen;
 Character player;
+boolean leftKeyPressed = false, rightKeyPressed = false, spaceKeyPressed = false;
+String pickedCharacter;
+
 
 void setup()
 {
     mainScreen = new Screen();
-    player = new Character(mainScreen);
     size(900, 900);
     //font=createFont("ComicSansMS-BoldItalic-48.vlw", 32);
     font = createFont("Georgia", 32);
@@ -275,39 +310,6 @@ void draw()
         kraj_screen();
 }
 
-void keyPressed(){
-    if (key==CODED)
-        {
-            if (keyCode==LEFT)
-            { 
-                leftKeyPressed = true;
-            }
-            if (keyCode==RIGHT)
-            { 
-                rightKeyPressed = true;
-            }
-        } else if (key == ' ')
-        {
-            spaceKeyPressed = true;
-        }
-}
- 
-void keyReleased(){
-    if (key==CODED)
-        {
-            if (keyCode==LEFT)
-            { 
-                leftKeyPressed = false;
-            }
-            if (keyCode==RIGHT)
-            { 
-                rightKeyPressed = false;
-            }
-        } else if (key == ' ')
-        {
-            spaceKeyPressed = false;
-        }
-}
 
 void pocetni_screen()
 {
@@ -320,15 +322,19 @@ void pocetni_screen()
     fill(color(var, 255, 255));
     var++;
     if (var>255)var=0;
-    text("Press any key to start", 3*height/4, 4*width/5);
+    text("Press any key to start \n ('d' to play with Disco Dave)", 3*height/4, 4*width/5);
     textSize(160);
     rotate(PI/6);
     text("ICY", 3*height/4, -width/5);
     text("TOWER", 3*height/4, -width/5+160);
     rotate(-PI/6);
 
-    if (keyPressed && stanje==0)
+    if (keyPressed && stanje==0) {
+        if(key == 'd') pickedCharacter = "dave";
+        else pickedCharacter = "harold";
+        player = new Character(mainScreen, pickedCharacter);
         stanje=1; 
+    }
     //ako stisnemo neku tipku, onda prelazimo na igru
 }
 
@@ -373,6 +379,43 @@ void kraj_screen()
 
 void reset() {
     mainScreen = new Screen();
-    player = new Character(mainScreen);
+    player = new Character(mainScreen, pickedCharacter);
     stanje = 1;
+}
+
+// Ako su pritisnute tipke za lijevo i desno, one su CODED pa moramo ovako
+// izvršavati provjeru
+
+void keyPressed(){
+    if (key==CODED)
+        {
+            if (keyCode==LEFT)
+            { 
+                leftKeyPressed = true;
+            }
+            if (keyCode==RIGHT)
+            { 
+                rightKeyPressed = true;
+            }
+        } else if (key == ' ')
+        {
+            spaceKeyPressed = true;
+        }
+}
+ 
+void keyReleased(){
+    if (key==CODED)
+        {
+            if (keyCode==LEFT)
+            { 
+                leftKeyPressed = false;
+            }
+            if (keyCode==RIGHT)
+            { 
+                rightKeyPressed = false;
+            }
+        } else if (key == ' ')
+        {
+            spaceKeyPressed = false;
+        }
 }

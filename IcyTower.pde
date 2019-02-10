@@ -10,7 +10,9 @@ import java.util.Map;
 //       Koliko sam shvatio desava se ako lik prijede neku platformu na nacin da prijedje vrh al ne dovoljno da stane na nju. ALi desava se samo nekada.
 //       Cini mi se da sam mozda popravio al tesko je dokazat dok se ne dogodi
 
-// TODO: Spriteove popravit. Napola su prozirni iz nekog cudnog razloga
+// TODO: Implementirati comboe
+// TODO: Level design (Kolike će bit platforme i kada i na kojim pozicijama)
+// TODO: Možda popravit spriteove tako da su malo smisleniji. Ovako su animacije malo čudne. Trebalo bi možda koristit male spriteove i image.width i image.height umjesto fiksne veličine
 
 // Klasa u kojoj su podatci o samim platformama po kojima lik skace
 class Platform {
@@ -29,10 +31,9 @@ class Platform {
     boolean isOnPlatform(Character player) { 
         if(player.verticalSpeed() < 0) return false; // Ako igrac ide prema gore onda ne pada na platformu 
 
-        // Width i height nam ne trebaju jer ih mi namjestamo na 60, odnosno 70
-        if ( player.positionY() + 70 >= y - player.verticalSpeed()  && player.positionY() + 70  <= y && // Provjeravamo hoce li igrac u sljedecem frameu biti na platformi
-             player.positionX() + 60 >= x                           && player.positionX() <= x + w ) {
-            player.setPositionY(y - 70); // Postavljamo igraca na platformu
+        if ( player.positionY() + player.getSpriteHeight() >= y - player.verticalSpeed()  && player.positionY() + player.getSpriteHeight()  <= y && // Provjeravamo hoce li igrac u sljedecem frameu biti na platformi
+             player.positionX() + player.getSpriteWidth() >= x                            && player.positionX() <= x + w ) {
+            player.setPositionY(y - player.getSpriteHeight()); // Postavljamo igraca na platformu
             return true;
         }
         else {
@@ -41,8 +42,8 @@ class Platform {
     }
 
     int isOnLedge(Character player) { // | -1 = lijevi rub | 0 = nije na rubu | 1 = desni rub |
-        if(player.positionX() + 30 <= x + 10) return -1;
-        if(player.positionX() + 30 >= x + w - 10) return 1;
+        if(player.positionX() + player.getSpriteWidth()/3 <= x + 10) return -1;
+        if(player.positionX() + 2*player.getSpriteWidth()/3 >= x + w - 10) return 1;
         return 0;
     }
 
@@ -153,6 +154,7 @@ class Character {
         sprites = new HashMap<String, PImage>();    
         character = _character;
         loadSprites();
+        sprite = sprites.get("jumping");
     }
 
     void loadSprites() {
@@ -183,9 +185,7 @@ class Character {
         }
     }
 
-    void setSprite() {
-        boolean jesam = false;
-        
+    void setSprite() {        
         if (onGround)
         {
             if ( vx > -1 && vx < 1 ) { // Ako se ne krece i stoji na zemlji
@@ -228,7 +228,6 @@ class Character {
                 //     rotate(rotation/5); rotation++;
                 //     image(sprite,0,0);
                 //     popMatrix();
-                //     jesam = true;
                 //     imageMode(CORNER);
                 // }
                 // else 
@@ -244,12 +243,16 @@ class Character {
             }
             
         }
-        if(!jesam) {
-            sprite.resize(60, 70);
+        sprite.resize(60, 70);
         image(sprite, posx, posy);
-        }
-        
-        
+    }
+
+    float getSpriteWidth() {
+        return 60;
+    }
+
+    float getSpriteHeight() {
+        return 70;
     }
 
     float positionX() {

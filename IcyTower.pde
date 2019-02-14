@@ -8,10 +8,15 @@ import java.util.Map;
 
 // FIXME: Ima bug koji ponekad pri skakanju blizu vrha dovodi do toga da lik zna proci kroz platforme.
 //        Cini mi se da se to sada desava samo kada je combo sprite
+//        Mozda popravljeno?
 
-// TODO: Implementirati comboe
-// TODO: Level design (Kolike će bit platforme i kada i na kojim pozicijama)
-// TODO: Možda popravit spriteove tako da su malo smisleniji. Ovako su animacije malo čudne.
+// TODO: TImeri su trenutacno ovisni o framerateu. Ja mislim da je to bolje nego realtime jer ako netko ima manji framerate odmah mu je i sporija igra
+//       jer je sve ovisno o framerateu.
+//       Mozemo implementirati da se ne pomice ovisno o framerateu. Tipa ako se lik pomice 60 pixela na 60 frameova da se pomice i 60 u 30 frameova tj 
+//       1 px po frameu u 60 ili 2 px po frameu ako je 30 fps. (Mozda dovoljno sve kretnje mnozit sa 60/frameRate ?)
+//       Al posto bi to moglo dovest do malo previse bugova onda mozda bolje ovako jer ipak je ne plasiramo na trziste
+
+// TODO: Asseti
 
 // Klasa u kojoj su podatci o samim platformama po kojima lik skace
 class Platform {
@@ -32,38 +37,17 @@ class Platform {
         return platformNumber;
     }
 
-    boolean isOnPlatform(Character player, boolean usingComboSprite) 
+    boolean isOnPlatform(Character player) 
     { 
         if (player.verticalSpeed() < 0) return false; // Ako igrac ide prema gore onda ne pada na platformu 
 
-        // TODO: Obrisati
-        // if(platformNumber == 1){
-        //     println(' ');
-        //     println("uvjet na y 1: " + (player.positionY() + player.getSpriteHeight() >= y - player.verticalSpeed()));
-        //     println("uvjet na y 2: " + (player.positionY() + player.getSpriteHeight()  <= y));
-        //     println(str(player.positionY()) + ' ' + str(player.getSpriteHeight()) + ' ' + str(player.verticalSpeed()) + ' ' + str(y));
-        //     println(str(player.positionY() + player.getSpriteHeight()) + ' '  + str(y - player.verticalSpeed()));
-        //     }
 
-
-        // Provjeravamo hoce li igrac u sljedecem frameu biti na platformi 
-        if(usingComboSprite) // Combo sprite su posx i posy po sredini spritea
-        {
-            if ( player.positionY() + player.getSpriteHeight()/2 >= y - player.verticalSpeed()  && // Hoce li igrac pasti na platformu u iducem frame-u
-                 player.positionY() + player.getSpriteHeight()/2  <= y && 
-                 player.positionX() + player.getSpriteWidth()/2 >= x && 
-                 player.positionX() - player.getSpriteWidth()/2 <= x + w ) // Gledamo je li lijevi rub igraca lijevo od desnog ruba platforme i ubrnuto
-            { 
-                player.setPositionY(y - player.getSpriteHeight()); // Postavljamo igraca na platformu
-                return true;
-            } 
-        }
-        else if ( player.positionY() + player.getSpriteHeight() >= y - player.verticalSpeed()  && // Hoce li igrac pasti na platformu u iducem frame-u
-                  player.positionY() + player.getSpriteHeight()  <= y && 
-                  player.positionX() + player.getSpriteWidth() >= x && 
-                  player.positionX() <= x + w ) // Gledamo je li lijevi rub igraca lijevo od desnog ruba platforme i ubrnuto
+        if ( player.positionY() + player.getSpriteHeight()/2 >= y - player.verticalSpeed()  && // Hoce li igrac pasti na platformu u iducem frame-u
+            player.positionY() + player.getSpriteHeight()/2  <= y &&  // Je li igrac iznad platforme?
+            player.positionX() + player.getSpriteWidth()/2 >= x &&  // Je li desno rub igraca desno od lijevog ruba platforme
+            player.positionX() - player.getSpriteWidth()/2 <= x + w ) // Je li lijevi rub igraca lijevo od desnog ruba platforme
         { 
-            player.setPositionY(y - player.getSpriteHeight()); // Postavljamo igraca na platformu
+            player.setPositionY(y - player.getSpriteHeight()/2); // Postavljamo igraca na platformu
             return true;
         } 
         
@@ -74,8 +58,8 @@ class Platform {
     // | -1 = lijevi rub | 0 = nije na rubu | 1 = desni rub |
     int isOnLedge(Character player) 
     { 
-        if (player.positionX() +   player.getSpriteWidth()/3 <= x + 10)     return -1;
-        if (player.positionX() + 2*player.getSpriteWidth()/3 >= x + w - 10) return 1;
+        if (player.positionX() - player.getSpriteWidth()/3 <= x + 10)     return -1;
+        if (player.positionX() + player.getSpriteWidth()/3 >= x + w - 10) return 1;
         return 0;
     }
 
@@ -86,8 +70,11 @@ class Platform {
 
     void draw() 
     {
-        fill(204, 102, 0);
+        // Crtaj platfomu
+        fill(#770077);
         rect(x, y, w, h);
+
+        // Na svaku desetu napisi broj platforme
         if (platformNumber % 10 == 0) 
         {
             textFont(createFont("Arial Bold", 18));
@@ -96,6 +83,7 @@ class Platform {
         }
     }
 
+    // Spusti platformu na ekranu
     void reduceHeight(float amount) 
     {
         y += amount;
@@ -105,12 +93,100 @@ class Platform {
 // Klasa o ekranu na kojem crtamo platforme i kojeg pomicemo
 class Screen {
 
-    private float speed;
-    private int level;
+    private float speed; // Izracunata brzina kretanja ekrana ovisna i o kretanju lika
+    private int level, levelTimer=0; // Temeljna brzina kretanja ekrana i timer koji povecava level po potrebi
     private ArrayList<Platform> platforms;
     private int noOfPlatforms = 8;
     private float screenStart = 100, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
     private float maxPlatformWidth = 350;
+
+    Screen() 
+    {    
+        level = 0; // Pocetna brzina treba bit nula jer se platforme tek micu kada igrac stane na platformu iznad cetvrte
+        platforms = new ArrayList<Platform>();
+    }
+
+    void draw() 
+    { // Imat ćemo 7 (podlozno promjenama) platformi najviše u isto vrijeme
+
+        // Crtamo prvo rubove ekrana
+        fill(#000077);
+        rect(0, 0, screenStart, height); // Lijevi rub
+        rect(screenEnd, 0, screenStart, height); // Desni rub (sirina je ista u oba ruba)
+
+        // Stvaramo prve platforme na pocetku igre
+        if (platforms.size() == 0) 
+        {
+            for (int i = 0; i < noOfPlatforms; i++) // Dodajemo platformi koliko treba
+            { 
+                if (i == 0) // Najdonja platforma
+                { 
+                    platforms.add(new Platform(screenStart + 0, height-20, screenEnd, 1));
+                } else 
+                {
+                    float platformWidth = random(maxPlatformWidth - 150, maxPlatformWidth);
+                    platforms.add(new Platform(random(screenStart + 10, screenEnd - platformWidth - 10), platforms.get(platforms.size() - 1).y - (height/noOfPlatforms), platformWidth, i + 1));
+                }
+            }
+        } else if (platforms.get(0).isOutOfBounds()) // Ako je najdonja platforma nestala onda nju izbacujemo iz liste i dodajemo novu platformu na vrh
+        { 
+            platforms.remove(0);
+            Platform platformBefore = platforms.get(platforms.size() - 1);
+            int platNo = platformBefore.platformNumber + 1;
+
+            // Randomiziramo velicine platformi
+            float platformWidth = (platNo < 200) ? random(maxPlatformWidth*(1-(platNo/1000)) - 150, maxPlatformWidth*(1-(platNo/1000))) : 200;
+
+            // Dodajemo novu platformu i ako je neki kat koji je djeljiv sa 50 onda je sirine cijelog ekrana
+            platforms.add(new Platform(( (platNo%50 == 0) ? screenStart : random(screenStart + 10, screenEnd - platformWidth - 10) ), 
+                                       platformBefore.y - (height/noOfPlatforms), 
+                                       (platNo%50 == 0) ? screenEnd :  platformWidth, 
+                                       platNo));
+        }
+
+        for ( Platform pl : platforms) 
+        {
+            pl.draw();
+        }
+
+        // TODO: Nacrtati sat za timer?
+
+        // TImer za levele
+        fill(255);
+        rect(5, 345, 90, 20);
+        fill(0);
+        rect(10, 350, 80, 10);
+        fill(125);
+        float timerMappedValue = map(levelTimer, 0, 1800, 0, 80);
+        rect(10 + 80 - timerMappedValue, 350, timerMappedValue, 10);
+
+        // Provjera timera i levela
+        if(level == 0) return; // Ako jos nije pocelo onda ne radi nista
+
+        levelTimer++;
+        if(levelTimer == 1800) // 30 sekundi 
+        {
+            level++;
+            levelTimer = 0;
+        }
+
+        
+
+        
+    }
+
+    // Pomakni ekran ovisno o igracevoj poziciji i brzini kretanja
+    void moveScreen(float playerPosY, float playerVerticalSpeed) 
+    { 
+        speed = level;
+        if (playerPosY < height/4 && playerVerticalSpeed < 0)
+            speed += abs(playerVerticalSpeed) * map(playerPosY, height/4, -10, 0, 1); // Racunamo koliko ce se pomaknuti
+
+        for ( Platform pl : platforms) 
+        {
+            pl.reduceHeight(speed);
+        }
+    }
 
     float getScreenStart()
     {
@@ -122,14 +198,8 @@ class Screen {
         return screenEnd;
     }
 
-    Screen() 
-    {    
-        level = 0; // Pocetna brzina treba bit nula jer se platforme tek micu kada igrac skoci prvi kat
-        platforms = new ArrayList<Platform>();
-    }
-
     float getSpeed() 
-    { // Mozda treba vratiti izracunatu brzinu iz moveScreen metode a ne fiksnu ??
+    { 
         return speed;
     }
 
@@ -142,70 +212,6 @@ class Screen {
     {
         return platforms;
     }
-
-    void draw() 
-    { // Imat ćemo 7 (podlozno promjenama) platformi najviše u isto vrijeme
-
-        // Crtamo prvo rubove
-        fill(204, 102, 0);
-        rect(0, 0, screenStart, height); // Lijevi rub
-        rect(screenEnd, 0, screenStart, height); // Desni rub (sirina je ista u oba ruba)
-
-        
-
-        // Stvaramo prve platforme na pocetku igre
-        if (platforms.size() == 0) 
-        {
-            for (int i = 0; i < noOfPlatforms; i++) // Dodajemo platformi koliko fali
-            { 
-                if (i == 0) // Najdonja platforma
-                { 
-                    platforms.add(new Platform(screenStart + 0, height-20, screenEnd, 1));
-                } else 
-                {
-                    float platformWidth = random(maxPlatformWidth - 150, maxPlatformWidth);
-                    platforms.add(new Platform(random(screenStart + 10, screenEnd - platformWidth - 10), platforms.get(platforms.size() - 1).y - (height/noOfPlatforms), platformWidth, i + 1));
-                }
-            }
-        } else if (platforms.get(0).isOutOfBounds()) 
-        { // Ako je najdonja platforma nestala onda nju izbacujemo iz liste i dodajemo novu platformu na vrh
-            platforms.remove(0);
-            Platform platformBefore = platforms.get(platforms.size() - 1);
-            int platNo = platformBefore.platformNumber + 1;
-
-            float platformWidth = (platNo < 200) ? random(maxPlatformWidth*(1-(platNo/1000)) - 150, maxPlatformWidth*(1-(platNo/1000))) : 200;
-            // Dodajemo novu platformu i ako je neki kat koji je djeljiv sa 50 onda je duzine cijelog ekrana
-            platforms.add(new Platform(( (platNo%50 == 0) ? screenStart : random(screenStart + 10, screenEnd - platformWidth - 10) ), 
-                                       platformBefore.y - (height/noOfPlatforms), 
-                                       (platNo%50 == 0) ? screenEnd :  platformWidth, 
-                                       platNo));
-
-            // Ako je platforma djeljiva sa 100 onda povećamo brzinu za 1
-            // TODO: Brzina se povećava ovisno o timeru a ne katu
-            // Zelimo li da je timer ovisan o frameovima ili da je real-time?
-            if (platNo%100 == 0) level++;
-        }
-
-        for ( Platform pl : platforms) 
-        {
-            pl.draw();
-        }
-    }
-
-    void moveScreen(float playerPosY, float playerVerticalSpeed) // Pomakni ekran ovisno o igracevoj poziciji i brzini kretanja
-    { 
-        // Racunamo koliko ce se pomaknuti
-        // TODO: Dodati ovaj izracun
-
-        speed = level;
-        if (playerPosY < height/4 && playerVerticalSpeed < 0)
-            speed += abs(playerVerticalSpeed) * map(playerPosY, height/4, -10, 0, 1);
-
-        for ( Platform pl : platforms) 
-        {
-            pl.reduceHeight(speed);
-        }
-    }
 }
 
 
@@ -217,7 +223,7 @@ class Character {
     private float ax=.32, ay=.64;
     private PImage sprite;
     private int run = 0, ledge = 0, standing = 0, rotation = 0;
-    private boolean onGround=false, usingComboSprite=false, jumpedFromPlatform=false, firstLanding=false, isInCombo=false;
+    private boolean onGround=false, jumpedFromPlatform=false, firstLanding=false, isInCombo=false;
     private Screen screen;
     String character;
     private HashMap<String, PImage> sprites = new HashMap<String, PImage>();   
@@ -236,7 +242,7 @@ class Character {
 
     void loadSprites() 
     {
-
+        imageMode(CENTER);
         sprites.put("jumping", loadImage(character + "-jumping.png"));
         sprites.put("jumping-right", loadImage(character + "-jumping-right.png"));
         sprites.put("jumping-left", loadImage(character + "-jumping-left.png"));
@@ -266,22 +272,16 @@ class Character {
     {        
         if(isInCombo && abs(startingJumpSpeed) > 10 && jumpedFromPlatform) // Crta 'combo' sprite i rotira ga
         {
-            // FIXME: Cini mi se da combo sprite se ne ocitava dobro i nekad prolazi kroz platforme kad se cini da ne bi trebao
-            usingComboSprite = true;
             sprite = sprites.get("combo");            
             pushMatrix();
-            imageMode(CENTER);
             translate(posx, posy);
             rotate(rotation/5); rotation++;
             image(sprite,0,0);
             popMatrix();
-            imageMode(CORNER);
             sprite.resize(0, 70);
-            // image(sprite, posx, posy);
         }
         else 
         {
-        usingComboSprite = false;
         if (onGround)
         {
             if (abs(vx) < 1) // Ako se ne krece i stoji na zemlji
@@ -298,7 +298,7 @@ class Character {
                 } else 
                 {
                     sprite = sprites.get("standing-"+str(standing/20));
-                    standing = (standing+1)%60; // Mijenjamo sprite za rub svako 20 frameova
+                    standing = (standing+1)%60; // Mijenjamo sprite za stajanje svako 20 frameova
                 }
             } else 
             {
@@ -326,7 +326,6 @@ class Character {
                 }
             }
         }
-        // sprite.resize(60, 70);
         sprite.resize(0, 70);
         image(sprite, posx, posy);
         }
@@ -342,12 +341,16 @@ class Character {
         keepInScreen();
         setSprite();
 
-        // Drawing combo counter
-        textFont(createFont("Arial Bold", 18));
-        fill(255);
-        text(str(comboCount), 20, 20);
+        // Crtamo counter za combo ako se desava combo
+        if(comboCount > 0) 
+        {
+            textFont(createFont("Arial Bold", 18));
+            fill(255);
+            text(str(comboCount) + "\n FLOORS!", 40, 270);
+        }
+        
 
-        // Drawing combo bar
+        // Crtamo bar za combo
         fill(255);
         rect(15, 45, 20, 190);
         fill(0);
@@ -358,7 +361,7 @@ class Character {
         //TODO: brisati
         textFont(createFont("Arial Bold", 18));
         fill(255);
-        text(str(round(frameRate)), 50, 850);
+        text("FPS: " + str(round(frameRate)), 50, 850);
         
 
     }
@@ -403,8 +406,9 @@ class Character {
         checkForCombo();
 
         // TODO: Mozda napraviti da, ako se samo drzi space, bar u jednom frameu dotakne platformu a ne odma skakati dalje
+        //       Sada kada su sve slike centrirane mozda i ne treba jer je prirodan prijelaz iz spriteova
 
-        //ako smo stisli space i nismo u letu, nego smo na površini(onGround==true, onda skacemo
+        //ako smo stisli space i nismo u letu nego smo na površini (kada je onGround true), onda skacemo
         if (spaceKeyPressed && onGround)
         {
             vy=-12 - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj 
@@ -413,7 +417,7 @@ class Character {
             startingJumpSpeed = vx;
             jumpedFromPlatform = true; // Oznacavamo da je skocio sa platforme a ne pao
 
-            if (currentPlatformIndex > 2) // Ako prijedjemo drugo platformu onda se ekran pocinje kretati
+            if (currentPlatformIndex > 4) // Ako prijedjemo cetvrtu platformu onda se ekran pocinje kretati i pali se timer
             {
                 screen.setLevel(1);
             }
@@ -428,7 +432,6 @@ class Character {
 
     boolean checkForCombo() // Provjeravamo je li combo
     { 
-        // FIXME: jedan frame je u combo a drugi nije prije samog pocetka comboa
         // Sa wiki:
         // A combo ends when a player makes a jump which covers only one floor, 
         // falls off a floor and lands on a lower floor, 
@@ -468,14 +471,14 @@ class Character {
         if (posy <= -10)
             posy=-10; 
 
-        // Treba nam jer za vrijeme comboa sprite je centriran
-        float comboSpriteHalf = (usingComboSprite) ? sprite.width/2 : 0;
+        // Treba nam jer su slike centrirane
+        float spriteHalf = sprite.width/2;
 
         //moramo mu zabraniti i da iziđe izvan lijevih i desnih rubova
-        posx = constrain(posx, screen.getScreenStart() + comboSpriteHalf, screen.getScreenEnd()-sprite.width+comboSpriteHalf);
+        posx = constrain(posx, screen.getScreenStart() + spriteHalf, screen.getScreenEnd()-sprite.width+spriteHalf);
 
         // Odbijaj lika od zidova
-        if (posx - comboSpriteHalf == screen.getScreenStart() || posx + sprite.width - comboSpriteHalf == screen.getScreenEnd())
+        if (posx - spriteHalf == screen.getScreenStart() || posx + sprite.width - spriteHalf == screen.getScreenEnd())
         {
             vx *= (-0.5);
         }
@@ -485,7 +488,7 @@ class Character {
     {
         for ( Platform pl : screen.getPlatforms()) 
         {
-            if (pl.isOnPlatform(this, usingComboSprite))
+            if (pl.isOnPlatform(this))
             {
                 player.setCurrentPlatformIndex(screen.getPlatforms().indexOf(pl));
                 player.setCurrentPlatformNumber(pl.getPlatformNumber());

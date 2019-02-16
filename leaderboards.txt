@@ -10,5 +10,3 @@ Highest floor
 3 0 0 AAA
 4 0 0 AAA
 5 0 0 AAA
-
-Format is "placement foor combo player"

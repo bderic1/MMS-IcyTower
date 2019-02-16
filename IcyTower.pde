@@ -6,6 +6,7 @@
 
 import java.util.Iterator;
 import java.util.Map;
+import java.lang.*;
 
 
 // FIXME: Ima bug koji ponekad pri skakanju blizu vrha dovodi do toga da lik zna proci kroz platforme.
@@ -19,6 +20,157 @@ import java.util.Map;
 //       Al posto bi to moglo dovest do malo previse bugova onda mozda bolje ovako jer ipak je ne plasiramo na trziste
 
 // TODO: Asseti
+
+// FIXME: Naknadna upisivanja u ljestvicu najboljih ne upisuju dobro
+
+// Ljestvice najboljih rezultata
+// Format je "placement foor combo player"
+class Leaderboards {
+    ArrayList< HashMap<String, String> > bestCombo = new ArrayList< HashMap<String, String> >(), bestFloor = new ArrayList< HashMap<String, String> >();
+    int newCombo, newFloor, indexOfBestCombo, indexOfBestFloor;
+
+    Leaderboards() 
+    {
+        String[] lines = loadStrings("leaderboards.txt");
+        for (int i = 1 ; i < lines.length; i++) 
+        {
+            if(i < 6)
+            {
+                String[] values = lines[i].split(" ");
+                bestCombo.add(new HashMap<String, String>());
+                bestCombo.get(i-1).put("floor", values[1]);
+                bestCombo.get(i-1).put("combo", values[2]);
+                bestCombo.get(i-1).put("player", values[3]);
+            } else if (i > 6) 
+            {
+                String[] values = lines[i].split(" ");
+                bestFloor.add(new HashMap<String, String>());
+                bestFloor.get(i-7).put("floor", values[1]);
+                bestFloor.get(i-7).put("combo", values[2]);
+                bestFloor.get(i-7).put("player", values[3]);
+            }
+        }
+    }
+
+    boolean checkForHighScore(int highestCombo, int floor)
+    {
+        int br = 0; 
+        HashMap<String, String> el;
+        indexOfBestCombo = -1;
+        indexOfBestFloor = -1;
+
+        for( int i = 0; i < bestCombo.size(); ++i)
+        {
+            el = bestCombo.get(i);
+            if( highestCombo > Integer.parseInt(el.get("combo")))
+            {
+                indexOfBestCombo = i;
+                newCombo = highestCombo;
+                newFloor = floor;
+                ++br;
+                break;
+            }
+        }
+
+        for( int i = 0; i < bestFloor.size(); ++i)
+        {
+            el = bestFloor.get(i);
+            if( floor > Integer.parseInt(el.get("floor")))
+            {
+                indexOfBestFloor = i;
+                newCombo = highestCombo;
+                newFloor = floor;
+                ++br;
+                break;
+            }
+        }
+
+        return (br > 0);
+
+    }
+
+    void addNewRecord(String newUsername)
+    {
+        HashMap<String, String> el;
+
+        if(indexOfBestCombo >= 0)
+        {
+            int i = indexOfBestCombo;
+            el = bestCombo.get(i);
+            bestCombo.add(i, new HashMap<String, String>());
+            bestCombo.get(i).put("floor", str(newFloor));
+            bestCombo.get(i).put("combo", str(newCombo));
+            bestCombo.get(i).put("player", newUsername);
+            bestCombo.remove(bestCombo.size() - 1);
+        }
+
+
+        if(indexOfBestFloor >= 0)
+        {
+            int i = indexOfBestFloor;
+            el = bestFloor.get(i);
+            bestFloor.add(i, new HashMap<String, String>());
+            bestFloor.get(i).put("floor", str(newFloor));
+            bestFloor.get(i).put("combo", str(newCombo));
+            bestFloor.get(i).put("player", newUsername);
+            bestFloor.remove(bestFloor.size() - 1);
+        }
+            
+    }
+
+
+
+    // Format je "placement foor combo player"
+    void saveToFile() 
+    {
+        HashMap<String, String> el;
+        String[] outputString = new String[12];
+        outputString[0] = "Highest combo";
+        for( int i = 0; i < 5; ++i)
+        {
+            el = bestCombo.get(i);
+            outputString[i+1] = str(i+1) + ' ' + el.get("floor") + ' ' + el.get("combo") + ' ' + el.get("player");
+        }
+
+        outputString[5] = "Highest floor\nPl Fl Cm Us";
+        for( int i = 0; i < 5; ++i)
+        {
+            el = bestFloor.get(i);
+            outputString[i+7] = str(i+1) + ' ' + el.get("floor") + ' ' + el.get("combo") + ' ' + el.get("player");
+        }
+
+        saveStrings("leaderboards.txt", outputString);
+    }
+
+    void drawOnStartScreen()
+    {
+        HashMap<String, String> el;
+        String comboString = "Highest combo\n# F C U";
+        for( int i = 0; i < 5; ++i)
+        {
+            el = bestCombo.get(i);
+            comboString += '\n' + str(i+1) + ". " + el.get("floor") + " " + el.get("combo") + "    " + el.get("player");
+        }
+
+        String floorString = "Highest floor\n# F C U";
+        for( int i = 0; i < 5; ++i)
+        {
+            el = bestFloor.get(i);
+            floorString += '\n' + str(i+1) + ". " + el.get("floor") + " " + el.get("combo") + "    " + el.get("player");
+        }
+
+        textAlign(LEFT);
+        PFont myFont = createFont("SansSerif", 30);
+        textFont(myFont);
+        fill(255);
+        text(comboString, 3*width/5, 5*height/7);
+        text(floorString, 4*width/5, 5*height/7);
+        textAlign(CENTER);
+
+
+    }
+
+}
 
 // Klasa u kojoj su podatci o samim platformama po kojima lik skace
 class Platform {
@@ -250,16 +402,18 @@ class Character {
     private float ax=.32, ay=.64;
     private PImage sprite;
     private int run = 0, ledge = 0, standing = 0, rotation = 0;
-    private boolean onGround=false, jumpedFromPlatform=false, firstLanding=false, isInCombo=false;
+    private boolean onGround=false, jumpedFromPlatform=false, firstLanding=false, isInCombo=false, newRecord = false;
     private Screen screen;
     String character;
     private HashMap<String, PImage> sprites = new HashMap<String, PImage>();   
     private int currentPlatformIndex, currentPlatformNumber, previousPlatformNumber, comboCount, comboTimer = 0, highestCombo = 0;
     private float startingJumpSpeed;
+    Leaderboards lboards;
 
-    Character( Screen scr, String _character) 
+    Character( Screen scr, String _character, Leaderboards _lboards) 
     {
         screen = scr;
+        lboards = _lboards;
         posx = (screen.getScreenStart() + screen.getScreenEnd())/2-30; 
         posy = height-55;
         character = _character;
@@ -297,7 +451,7 @@ class Character {
 
     void setSprite() 
     {        
-        if(isInCombo && abs(startingJumpSpeed) > 10 && jumpedFromPlatform) // Crta 'combo' sprite i rotira ga
+        if(isInCombo && abs(startingJumpSpeed) > 10 && jumpedFromPlatform) // Crta "combo" sprite i rotira ga
         {
             sprite = sprites.get("combo");            
             pushMatrix();
@@ -502,7 +656,11 @@ class Character {
     {
         //ako haroldova dođe ispod visine, gotovi smo
         if (posy>=height-sprite.height/2)
-            stanje=2; 
+        {
+            newRecord = lboards.checkForHighScore(highestCombo, currentPlatformNumber);
+            stanje=2;
+        }
+             
 
         //ako harold dođe do vrha, ne može ići više od toga (ostalo -10 jer u originalu on udje malo u strop al vuce ekran za sobom pa nema problema i izgleda prirodno)
         if (posy <= -10)
@@ -576,15 +734,23 @@ class Character {
         currentPlatformNumber = platformNo;
     }
 
+    boolean isThereANewRecord()
+    {
+        return newRecord;
+    }
+
 }
 
-int stanje=0, var=0; 
+int stanje=0, var=0, currentLetter=0; 
 PFont font; 
 PImage bg;
 Screen mainScreen;
 Character player;
 boolean leftKeyPressed = false, rightKeyPressed = false, spaceKeyPressed = false;
+boolean usernameEntered = false;
 String pickedCharacter;
+Leaderboards boards; 
+char[] username = new char[] {'A', 'A', 'A'};
 
 
 void setup()
@@ -594,6 +760,8 @@ void setup()
     font = createFont("Georgia", 32);
     colorMode(HSB);
     noStroke();
+
+    boards = new Leaderboards(); 
 
     
 }
@@ -629,11 +797,13 @@ void startScreen()
     text("TOWER", 3*width/4, -height/5+160);
     rotate(-PI/6);
 
+    boards.drawOnStartScreen();
+
     if (keyPressed && stanje==0 && (key == 'd' || key == 'h' || key == 'D' || key == 'H')) 
     {
         pickedCharacter = (key == 'd' || key == 'D') ? "dave" : "harold";
         mainScreen = new Screen();
-        player = new Character(mainScreen, pickedCharacter);
+        player = new Character(mainScreen, pickedCharacter, boards);
         stanje=1;
     }
 }
@@ -663,11 +833,34 @@ void endScreen()
     text("GAME", height/2, width/3);
     text("OVER", height/2, width/3 + 220);
     textSize(20);
-    text("Press 'ENTER' to restart.", width/2, height/3+440);
+    text("Press 'R' to restart.", width/2, height/3+440);
 
-    if (keyPressed && key == ENTER) 
+    
+
+    if(player.isThereANewRecord() && !usernameEntered) 
+    {
+
+        fill(125);
+        rect(width/7, height/7, 5*width/7, 5*height/7);
+
+        char[] us = username.clone();
+        if((frameCount/10)%2 == 0) us[currentLetter] = '_';
+
+        fill(255);
+        textSize(40);
+        text("NEW RECORD\nWrite your name:\n" + String.valueOf(us) + "\nPress ENTER on end", width/2, 2*height/7);
+
+        if (keyPressed && key == ENTER) 
+        {
+            usernameEntered = true;
+            boards.addNewRecord(String.valueOf(username));
+        }
+    }
+    
+    if (usernameEntered && keyPressed && (key == 'r' || key == 'R')) 
     {
         reset();
+        usernameEntered = false;
     }
 }
 
@@ -700,7 +893,7 @@ void pauseScreen()
 
 void reset() {
     mainScreen = new Screen();
-    player = new Character(mainScreen, pickedCharacter);
+    player = new Character(mainScreen, pickedCharacter, boards);
     stanje = 1;
 }
 
@@ -724,6 +917,10 @@ void keyPressed() {
     } else if ((key == 'p' || key == 'P') && (stanje == 1 || stanje == 3))
     {
         stanje = (stanje == 1) ? 3 : 1;
+    } else if (stanje == 2 &&  !usernameEntered && key!=ENTER) 
+    {
+        username[currentLetter] = key;
+        currentLetter = (currentLetter+1)%3;
     }
 }
 

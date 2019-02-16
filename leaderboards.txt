@@ -1,0 +1,14 @@
+Highest combo
+1 0 0 AAA
+2 0 0 AAA
+3 0 0 AAA
+4 0 0 AAA
+5 0 0 AAA
+Highest floor
+1 0 0 AAA
+2 0 0 AAA
+3 0 0 AAA
+4 0 0 AAA
+5 0 0 AAA
+
+Format is "placement foor combo player"

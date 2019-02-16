@@ -2,9 +2,11 @@
 //stanje==0 će biti početni ekran
 //stanje==1 je igra
 //stanje==2 je game over screen
+//stanje==3 je pause screen
 
 import java.util.Iterator;
 import java.util.Map;
+
 
 // FIXME: Ima bug koji ponekad pri skakanju blizu vrha dovodi do toga da lik zna proci kroz platforme.
 //        Cini mi se da se to sada desava samo kada je combo sprite
@@ -96,9 +98,9 @@ class Screen {
     private float speed; // Izracunata brzina kretanja ekrana ovisna i o kretanju lika
     private int level, levelTimer=0; // Temeljna brzina kretanja ekrana i timer koji povecava level po potrebi
     private ArrayList<Platform> platforms;
-    private int noOfPlatforms = 8;
-    private float screenStart = 100, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
-    private float maxPlatformWidth = 350;
+    private int noOfPlatforms = 6;
+    private float screenStart = 200, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
+    private float maxPlatformWidth = 400;
 
     Screen() 
     {    
@@ -121,7 +123,7 @@ class Screen {
             { 
                 if (i == 0) // Najdonja platforma
                 { 
-                    platforms.add(new Platform(screenStart + 0, height-20, screenEnd, 1));
+                    platforms.add(new Platform(screenStart + 0, height-20, screenEnd - screenStart, 1));
                 } else 
                 {
                     float platformWidth = random(maxPlatformWidth - 150, maxPlatformWidth);
@@ -140,7 +142,7 @@ class Screen {
             // Dodajemo novu platformu i ako je neki kat koji je djeljiv sa 50 onda je sirine cijelog ekrana
             platforms.add(new Platform(( (platNo%50 == 0) ? screenStart : random(screenStart + 10, screenEnd - platformWidth - 10) ), 
                                        platformBefore.y - (height/noOfPlatforms), 
-                                       (platNo%50 == 0) ? screenEnd :  platformWidth, 
+                                       (platNo%50 == 0) ? screenEnd - screenStart :  platformWidth, 
                                        platNo));
         }
 
@@ -153,12 +155,12 @@ class Screen {
 
         // TImer za levele
         fill(255);
-        rect(5, 345, 90, 20);
+        rect(5, 345, screenStart - 10, 20);
         fill(0);
-        rect(10, 350, 80, 10);
+        rect(10, 350, screenStart - 20, 10);
         fill(125);
-        float timerMappedValue = map(levelTimer, 0, 1800, 0, 80);
-        rect(10 + 80 - timerMappedValue, 350, timerMappedValue, 10);
+        float timerMappedValue = map(levelTimer, 0, 1800, 0, screenStart - 20);
+        rect(10 + screenStart - 20 - timerMappedValue, 350, timerMappedValue, 10);
 
         // Provjera timera i levela
         if(level == 0) return; // Ako jos nije pocelo onda ne radi nista
@@ -186,6 +188,31 @@ class Screen {
         {
             pl.reduceHeight(speed);
         }
+    }
+
+    void pauseScreen()
+    {
+        // Crtamo prvo rubove ekrana
+        fill(#000077);
+        rect(0, 0, screenStart, height); // Lijevi rub
+        rect(screenEnd, 0, screenStart, height); // Desni rub (sirina je ista u oba ruba)
+
+        for ( Platform pl : platforms) 
+        {
+            pl.draw();
+        }
+
+        // TODO: Nacrtati sat za timer?
+
+        // TImer za levele
+        fill(255);
+        rect(5, 345, 90, 20);
+        fill(0);
+        rect(10, 350, 80, 10);
+        fill(125);
+        float timerMappedValue = map(levelTimer, 0, 1800, 0, 80);
+        rect(10 + 80 - timerMappedValue, 350, timerMappedValue, 10);
+
     }
 
     float getScreenStart()
@@ -227,14 +254,14 @@ class Character {
     private Screen screen;
     String character;
     private HashMap<String, PImage> sprites = new HashMap<String, PImage>();   
-    private int currentPlatformIndex, currentPlatformNumber, previousPlatformNumber, comboCount, comboTimer=0;
+    private int currentPlatformIndex, currentPlatformNumber, previousPlatformNumber, comboCount, comboTimer = 0, highestCombo = 0;
     private float startingJumpSpeed;
 
     Character( Screen scr, String _character) 
     {
         screen = scr;
         posx = (screen.getScreenStart() + screen.getScreenEnd())/2-30; 
-        posy = height-90;
+        posy = height-55;
         character = _character;
         loadSprites();
         sprite = sprites.get("jumping");
@@ -332,6 +359,13 @@ class Character {
 
     }
 
+    void pauseScreen()
+    {
+        image(sprite, posx, posy);
+
+        drawCombo();
+    }
+
    
     void move()
     {
@@ -341,6 +375,13 @@ class Character {
         keepInScreen();
         setSprite();
 
+        drawCombo();
+        
+
+    }
+
+    void drawCombo()
+    {
         // Crtamo counter za combo ako se desava combo
         if(comboCount > 0) 
         {
@@ -362,8 +403,6 @@ class Character {
         textFont(createFont("Arial Bold", 18));
         fill(255);
         text("FPS: " + str(round(frameRate)), 50, 850);
-        
-
     }
 
     void horizontalMovement()
@@ -405,13 +444,10 @@ class Character {
         // Provjeravamo combo ovdje u slucaju da igrac odma odskoci od platforme pa cemo zabiljeziti tu platformu
         checkForCombo();
 
-        // TODO: Mozda napraviti da, ako se samo drzi space, bar u jednom frameu dotakne platformu a ne odma skakati dalje
-        //       Sada kada su sve slike centrirane mozda i ne treba jer je prirodan prijelaz iz spriteova
-
         //ako smo stisli space i nismo u letu nego smo na površini (kada je onGround true), onda skacemo
         if (spaceKeyPressed && onGround)
         {
-            vy=-12 - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj 
+            vy=-14 - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj 
             onGround=false;
             previousPlatformNumber = currentPlatformNumber;
             startingJumpSpeed = vx;
@@ -438,6 +474,7 @@ class Character {
         // or fails to make a jump within a certain time frame (about 3 seconds).
         if(currentPlatformNumber == previousPlatformNumber + 1 || previousPlatformNumber > currentPlatformNumber || comboTimer < 0 ) 
         {
+            if(comboCount > highestCombo) highestCombo = comboCount;
             comboCount = 0;
             comboTimer = 0;
             isInCombo = false;
@@ -552,12 +589,13 @@ String pickedCharacter;
 
 void setup()
 {
-    mainScreen = new Screen();
-    size(900, 900);
+    size(1100, 900);
     //font=createFont("ComicSansMS-BoldItalic-48.vlw", 32);
     font = createFont("Georgia", 32);
     colorMode(HSB);
     noStroke();
+
+    
 }
 
 void draw()
@@ -568,6 +606,8 @@ void draw()
         gameScreen(); 
     else if (stanje==2)
         endScreen();
+    else if (stanje==3)
+        pauseScreen();
 }
 
 
@@ -582,28 +622,25 @@ void startScreen()
     fill(color(var, 255, 255));
     var++;
     if (var>255)var=0;
-    text("Press any key to start \n ('d' to play with Disco Dave)", 3*height/4, 4*width/5);
+    text("Press H to play with Harold \n Press D to play with Disco Dave", 1*width/4, 4*height/5);
     textSize(160);
     rotate(PI/6);
-    text("ICY", 3*height/4, -width/5);
-    text("TOWER", 3*height/4, -width/5+160);
+    text("ICY", 3*width/4, -height/5);
+    text("TOWER", 3*width/4, -height/5+160);
     rotate(-PI/6);
 
-    if (keyPressed && stanje==0) 
+    if (keyPressed && stanje==0 && (key == 'd' || key == 'h' || key == 'D' || key == 'H')) 
     {
-        pickedCharacter = (key == 'd') ? "dave" : "harold";
+        pickedCharacter = (key == 'd' || key == 'D') ? "dave" : "harold";
+        mainScreen = new Screen();
         player = new Character(mainScreen, pickedCharacter);
         stanje=1;
     }
-    //ako stisnemo neku tipku, onda prelazimo na igru
 }
 
 void gameScreen()
 {  
-    if (keyPressed && key == 'r') 
-    {
-        reset();
-    }
+    
 
     background(100);
 
@@ -626,12 +663,39 @@ void endScreen()
     text("GAME", height/2, width/3);
     text("OVER", height/2, width/3 + 220);
     textSize(20);
-    text("Press 'ENTER' to continue.", height/2, width/3+440);
+    text("Press 'ENTER' to restart.", width/2, height/3+440);
 
     if (keyPressed && key == ENTER) 
     {
         reset();
     }
+}
+
+void pauseScreen()
+{
+    background(100);
+    mainScreen.pauseScreen();
+    player.pauseScreen();
+
+    fill(0);
+    rect(150, 150, 600, 600);
+
+    if (keyPressed && (key == 'r' || key == 'R')) 
+    {
+        reset();
+    } else if (keyPressed && (key == 'm' || key == 'M'))
+    {
+        stanje = 0;
+    }
+
+    fill(255);
+    textSize(20);
+    textAlign(LEFT);
+    text("Press 'R' to reset.", 170, 200);
+    text("Press 'M' to go to main menu.", 170, 300);
+    textAlign(CENTER);
+
+
 }
 
 void reset() {
@@ -657,6 +721,9 @@ void keyPressed() {
     } else if (key == ' ')
     {
         spaceKeyPressed = true;
+    } else if ((key == 'p' || key == 'P') && (stanje == 1 || stanje == 3))
+    {
+        stanje = (stanje == 1) ? 3 : 1;
     }
 }
 

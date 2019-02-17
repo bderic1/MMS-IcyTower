@@ -23,12 +23,15 @@ import java.lang.*;
 
 // FIXME: Naknadna upisivanja u ljestvicu najboljih ne upisuju dobro
 
+// TODO: Nacrtati sat za timer?
+
 // Ljestvice najboljih rezultata
 // Format je "placement foor combo player"
 class Leaderboards {
     ArrayList< HashMap<String, String> > bestCombo = new ArrayList< HashMap<String, String> >(), bestFloor = new ArrayList< HashMap<String, String> >();
     int newCombo, newFloor, indexOfBestCombo, indexOfBestFloor;
 
+    // Ucitava podatke iz datoteke i sprema u listu tako da pristupamo npr drugom najboljem combu i njegovom imenu sa bestCombo.get(1).get("player")
     Leaderboards() 
     {
         String[] lines = loadStrings("leaderboards.txt");
@@ -38,6 +41,7 @@ class Leaderboards {
             {
                 String[] values = lines[i].split(" ");
                 bestCombo.add(new HashMap<String, String>());
+
                 bestCombo.get(i-1).put("floor", values[1]);
                 bestCombo.get(i-1).put("combo", values[2]);
                 bestCombo.get(i-1).put("player", values[3]);
@@ -45,6 +49,7 @@ class Leaderboards {
             {
                 String[] values = lines[i].split(" ");
                 bestFloor.add(new HashMap<String, String>());
+
                 bestFloor.get(i-7).put("floor", values[1]);
                 bestFloor.get(i-7).put("combo", values[2]);
                 bestFloor.get(i-7).put("player", values[3]);
@@ -54,7 +59,7 @@ class Leaderboards {
 
     boolean checkForHighScore(int highestCombo, int floor)
     {
-        int br = 0; 
+        int br = 0; // Prati jesu li sruseni rekordi
         HashMap<String, String> el;
         indexOfBestCombo = -1;
         indexOfBestFloor = -1;
@@ -98,9 +103,11 @@ class Leaderboards {
             int i = indexOfBestCombo;
             el = bestCombo.get(i);
             bestCombo.add(i, new HashMap<String, String>());
+
             bestCombo.get(i).put("floor", str(newFloor));
             bestCombo.get(i).put("combo", str(newCombo));
             bestCombo.get(i).put("player", newUsername);
+
             bestCombo.remove(bestCombo.size() - 1);
         }
 
@@ -110,9 +117,11 @@ class Leaderboards {
             int i = indexOfBestFloor;
             el = bestFloor.get(i);
             bestFloor.add(i, new HashMap<String, String>());
+
             bestFloor.get(i).put("floor", str(newFloor));
             bestFloor.get(i).put("combo", str(newCombo));
             bestFloor.get(i).put("player", newUsername);
+
             bestFloor.remove(bestFloor.size() - 1);
         }
             
@@ -125,6 +134,7 @@ class Leaderboards {
     {
         HashMap<String, String> el;
         String[] outputString = new String[12];
+
         outputString[0] = "Highest combo";
         for( int i = 0; i < 5; ++i)
         {
@@ -132,7 +142,7 @@ class Leaderboards {
             outputString[i+1] = str(i+1) + ' ' + el.get("floor") + ' ' + el.get("combo") + ' ' + el.get("player");
         }
 
-        outputString[5] = "Highest floor\nPl Fl Cm Us";
+        outputString[5] = "Highest floor";
         for( int i = 0; i < 5; ++i)
         {
             el = bestFloor.get(i);
@@ -145,6 +155,7 @@ class Leaderboards {
     void drawOnStartScreen()
     {
         HashMap<String, String> el;
+
         String comboString = "Highest combo\n# F C U";
         for( int i = 0; i < 5; ++i)
         {
@@ -248,9 +259,9 @@ class Platform {
 class Screen {
 
     private float speed; // Izracunata brzina kretanja ekrana ovisna i o kretanju lika
-    private int level, levelTimer=0; // Temeljna brzina kretanja ekrana i timer koji povecava level po potrebi
+    private int level, levelTimer=0; // Temeljna brzina kretanja ekrana i timer koji povecava level po potrebi (svako 30 sekundi)
     private ArrayList<Platform> platforms;
-    private int noOfPlatforms = 6;
+    private int noOfPlatforms = 6; // Koliko platformi će biti na ekranu u isto vrijeme
     private float screenStart = 200, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
     private float maxPlatformWidth = 400;
 
@@ -261,8 +272,7 @@ class Screen {
     }
 
     void draw() 
-    { // Imat ćemo 7 (podlozno promjenama) platformi najviše u isto vrijeme
-
+    { 
         // Crtamo prvo rubove ekrana
         fill(#000077);
         rect(0, 0, screenStart, height); // Lijevi rub
@@ -278,8 +288,11 @@ class Screen {
                     platforms.add(new Platform(screenStart + 0, height-20, screenEnd - screenStart, 1));
                 } else 
                 {
-                    float platformWidth = random(maxPlatformWidth - 150, maxPlatformWidth);
-                    platforms.add(new Platform(random(screenStart + 10, screenEnd - platformWidth - 10), platforms.get(platforms.size() - 1).y - (height/noOfPlatforms), platformWidth, i + 1));
+                    float platformWidth = random(maxPlatformWidth - 150, maxPlatformWidth); // Randomiziramo sirinu platformi
+                    platforms.add(new Platform(random(screenStart + 10, screenEnd - platformWidth - 10), // x
+                                                platforms.get(platforms.size() - 1).y - (height/noOfPlatforms), // y
+                                                platformWidth, // width
+                                                i + 1)); // Platform number
                 }
             }
         } else if (platforms.get(0).isOutOfBounds()) // Ako je najdonja platforma nestala onda nju izbacujemo iz liste i dodajemo novu platformu na vrh
@@ -333,7 +346,7 @@ class Screen {
     void moveScreen(float playerPosY, float playerVerticalSpeed) 
     { 
         speed = level;
-        if (playerPosY < height/4 && playerVerticalSpeed < 0)
+        if (playerPosY < height/4 && playerVerticalSpeed < 0) // Ako je blizu vrhu i krece se prema gore
             speed += abs(playerVerticalSpeed) * map(playerPosY, height/4, -10, 0, 1); // Racunamo koliko ce se pomaknuti
 
         for ( Platform pl : platforms) 
@@ -553,7 +566,7 @@ class Character {
         fill(125);
         rect(20, 50 + 180 - comboTimer, 10, comboTimer);
 
-        //TODO: brisati
+        //TODO: brisati (Framerate)
         textFont(createFont("Arial Bold", 18));
         fill(255);
         text("FPS: " + str(round(frameRate)), 50, 850);
@@ -564,15 +577,15 @@ class Character {
         // Horizontalne kretnje
         if (leftKeyPressed)
         {
-            vx-=(vx > 0) ? 1.5*ax : ax;
+            vx -= (vx > 0) ? 1.5*ax : ax; // Ako se vec krece desno onda da se malo brze krece prema lijevo pa da brze uspori
         }
         if (rightKeyPressed)
         { 
-            vx+=(vx < 0) ? 1.5*ax : ax;
+            vx += (vx < 0) ? 1.5*ax : ax;
         } 
         if (onGround && !leftKeyPressed && !rightKeyPressed)
         {
-            vx*=0.9;
+            vx *= 0.9; // Usporavanje ako se ne krece
         }
 
         vx = constrain(vx, -15, 15);
@@ -604,7 +617,7 @@ class Character {
             vy=-14 - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj 
             onGround=false;
             previousPlatformNumber = currentPlatformNumber;
-            startingJumpSpeed = vx;
+            startingJumpSpeed = vx; // Potrebno radi odabire sprite-a
             jumpedFromPlatform = true; // Oznacavamo da je skocio sa platforme a ne pao
 
             if (currentPlatformIndex > 4) // Ako prijedjemo cetvrtu platformu onda se ekran pocinje kretati i pali se timer
@@ -638,7 +651,7 @@ class Character {
         if(onGround && firstLanding && currentPlatformNumber != previousPlatformNumber) // Zadnji uvjet pazi da nismo skocili na istu platformu
         {
             comboTimer = 180;
-            firstLanding = false;
+            firstLanding = false; // Pazi da ne bi skokove sa iste na istu platformu brojali
             comboCount += currentPlatformNumber - previousPlatformNumber;
         }
         else if(!onGround)
@@ -646,7 +659,7 @@ class Character {
             firstLanding = true;
         }
         
-        if(comboCount != 0)
+        if(comboCount != 0) // Timer za combo se ne mice ako nismo u combou
             comboTimer--;
         isInCombo = true;
         return true;
@@ -654,7 +667,7 @@ class Character {
 
     void keepInScreen()
     {
-        //ako haroldova dođe ispod visine, gotovi smo
+        //ako lik dođe ispod visine, gotovi smo
         if (posy>=height-sprite.height/2)
         {
             newRecord = lboards.checkForHighScore(highestCombo, currentPlatformNumber);
@@ -836,7 +849,7 @@ void endScreen()
     text("Press 'R' to restart.", width/2, height/3+440);
 
     
-
+    // Provjerava ako ima rekord i onda otvara prozor za upis usernamea
     if(player.isThereANewRecord() && !usernameEntered) 
     {
 
@@ -844,7 +857,7 @@ void endScreen()
         rect(width/7, height/7, 5*width/7, 5*height/7);
 
         char[] us = username.clone();
-        if((frameCount/10)%2 == 0) us[currentLetter] = '_';
+        if((frameCount/10)%2 == 0) us[currentLetter] = '_'; // Da simulira koje slovo se trenutno bira
 
         fill(255);
         textSize(40);
@@ -873,14 +886,6 @@ void pauseScreen()
     fill(0);
     rect(150, 150, 600, 600);
 
-    if (keyPressed && (key == 'r' || key == 'R')) 
-    {
-        reset();
-    } else if (keyPressed && (key == 'm' || key == 'M'))
-    {
-        stanje = 0;
-    }
-
     fill(255);
     textSize(20);
     textAlign(LEFT);
@@ -888,6 +893,13 @@ void pauseScreen()
     text("Press 'M' to go to main menu.", 170, 300);
     textAlign(CENTER);
 
+    if (keyPressed && (key == 'r' || key == 'R')) 
+    {
+        reset();
+    } else if (keyPressed && (key == 'm' || key == 'M'))
+    {
+        stanje = 0;
+    }
 
 }
 
@@ -914,10 +926,10 @@ void keyPressed() {
     } else if (key == ' ')
     {
         spaceKeyPressed = true;
-    } else if ((key == 'p' || key == 'P') && (stanje == 1 || stanje == 3))
+    } else if ((key == 'p' || key == 'P') && (stanje == 1 || stanje == 3)) // Pause screen on/off
     {
         stanje = (stanje == 1) ? 3 : 1;
-    } else if (stanje == 2 &&  !usernameEntered && key!=ENTER) 
+    } else if (stanje == 2 &&  !usernameEntered && key!=ENTER) // Ako je rekord onda upis slova za username
     {
         username[currentLetter] = key;
         currentLetter = (currentLetter+1)%3;

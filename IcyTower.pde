@@ -12,7 +12,8 @@ import java.lang.*;
 // FIXME: Ima bug koji ponekad pri skakanju blizu vrha dovodi do toga da lik zna proci kroz platforme.
 //        Cini mi se da se to sada desava samo kada je combo sprite
 //        Mozda popravljeno?
-
+// FIXME: Postoji bug s brojanjem platformi, može se doći do 10.platforme bez da on registrira da sam prešla 4.platfomu ako ne skačeš jednu po jednu. 
+//        
 // TODO: TImeri su trenutacno ovisni o framerateu. Ja mislim da je to bolje nego realtime jer ako netko ima manji framerate odmah mu je i sporija igra
 //       jer je sve ovisno o framerateu.
 //       Mozemo implementirati da se ne pomice ovisno o framerateu. Tipa ako se lik pomice 60 pixela na 60 frameova da se pomice i 60 u 30 frameova tj 
@@ -25,8 +26,9 @@ import java.lang.*;
 
 // TODO: Nacrtati sat za timer?
 
+
 // Ljestvice najboljih rezultata
-// Format je "placement foor combo player"
+// Format je "placement floor combo player"
 class Leaderboards {
     ArrayList< HashMap<String, String> > bestCombo = new ArrayList< HashMap<String, String> >(), bestFloor = new ArrayList< HashMap<String, String> >();
     int newCombo, newFloor, indexOfBestCombo, indexOfBestFloor;
@@ -41,7 +43,7 @@ class Leaderboards {
             {
                 String[] values = lines[i].split(" ");
                 bestCombo.add(new HashMap<String, String>());
-
+                
                 bestCombo.get(i-1).put("floor", values[1]);
                 bestCombo.get(i-1).put("combo", values[2]);
                 bestCombo.get(i-1).put("player", values[3]);
@@ -235,6 +237,7 @@ class Platform {
 
     void draw() 
     {
+      
         // Crtaj platfomu
         fill(#770077);
         rect(x, y, w, h);
@@ -264,12 +267,25 @@ class Screen {
     private int noOfPlatforms = 6; // Koliko platformi će biti na ekranu u isto vrijeme
     private float screenStart = 200, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
     private float maxPlatformWidth = 400;
+    //podaci za sat
+    public int sek; 
+    int cx, cy, prvi_prolazak=0;
+    float secondsRadius,clockDiameter ;
 
     Screen() 
     {    
         level = 0; // Pocetna brzina treba bit nula jer se platforme tek micu kada igrac stane na platformu iznad cetvrte
         platforms = new ArrayList<Platform>();
+        
+        //postavke sata
+
+        int clock_radius = 50;
+        secondsRadius = clock_radius * 0.72;
+        clockDiameter = clock_radius * 1.8;
+        cx = 70;
+        cy = 370;
     }
+   
 
     void draw() 
     { 
@@ -317,19 +333,25 @@ class Screen {
         }
 
         // TODO: Nacrtati sat za timer?
-
+/*
         // TImer za levele
         fill(255);
         rect(5, 345, screenStart - 10, 20);
         fill(0);
         rect(10, 350, screenStart - 20, 10);
         fill(125);
+        
         float timerMappedValue = map(levelTimer, 0, 1800, 0, screenStart - 20);
         rect(10 + screenStart - 20 - timerMappedValue, 350, timerMappedValue, 10);
-
+        */
+        if(level==0)
+        crtaj_sat(0);
+        else
+        crtaj_sat(1); 
+        
         // Provjera timera i levela
         if(level == 0) return; // Ako jos nije pocelo onda ne radi nista
-
+        
         levelTimer++;
         if(levelTimer == 1800) // 30 sekundi 
         {
@@ -337,15 +359,104 @@ class Screen {
             levelTimer = 0;
         }
 
-        
-
+       
         
     }
+
+    void crtaj_sat(int lvl)
+    {  
+
+      if(lvl==0)
+      {
+      noStroke();
+      ellipseMode(RADIUS);  
+      fill(255, 247, 150); 
+      ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8); 
+    
+      ellipseMode(CENTER);  
+      fill(255); 
+      ellipse(cx, cy, clockDiameter, clockDiameter);
+      // Draw the hands of the clock
+        stroke(255,0,0);
+        strokeWeight(7);
+        line(cx, cy, cx , cy - HALF_PI *secondsRadius);
+        strokeWeight(2);
+        beginShape(POINTS);
+        for (int a = 0; a < 360; a+=30) {
+          float angle = radians(a);
+          float x = cx + cos(angle) * secondsRadius;
+          float y = cy + sin(angle) * secondsRadius;
+          vertex(x, y);
+  }
+  endShape();
+      }
+      
+      else
+      {
+
+      noStroke();
+      ellipseMode(RADIUS);  
+      fill(255, 247, 150); 
+      ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8); 
+    
+      ellipseMode(CENTER);  
+      fill(255); 
+      ellipse(cx, cy, clockDiameter, clockDiameter);
+  
+      float s = map((second()-sek)*2, 0, 60, 0, TWO_PI)-HALF_PI;
+      
+        if((s+HALF_PI)%TWO_PI>=0 && (s+HALF_PI)%TWO_PI<0.5 && prvi_prolazak>1)
+        {
+          hurry(); 
+          float r = random(-2,2);
+          noStroke();
+          ellipseMode(RADIUS);  
+          fill(255, 247, 150); 
+          ellipse(cx+r, cy+r, clockDiameter/2+8, clockDiameter/2+8); 
+      
+          ellipseMode(CENTER);  
+          fill(255);  
+          ellipse(cx+r, cy+r, clockDiameter-s, clockDiameter+s);
+        }
+        // Draw the hands of the clock
+        stroke(255,0,0);
+        strokeWeight(7);
+        line(cx, cy, cx + cos(s) * secondsRadius, cy + sin(s) * secondsRadius);
+        
+        
+        strokeWeight(2);
+        beginShape(POINTS);
+        for (int a = 0; a < 360; a+=30) {
+          float angle = radians(a);
+          float x = cx + cos(angle) * secondsRadius;
+          float y = cy + sin(angle) * secondsRadius;
+          vertex(x, y);
+  }
+  endShape();
+  if(prvi_prolazak==1 && s>0)
+      prvi_prolazak++; 
+      }
+}
+    void hurry()
+    {
+      float r=random(-2,2);
+      textAlign(CENTER);
+      textFont(font); 
+      fill(color(var, 255, 255));
+      var++;
+      if (var>255)var=0;
+      textSize(60);
+      text("Hurry up!", height/2+r, width/3+r);    
+    
+    }
+
 
     // Pomakni ekran ovisno o igracevoj poziciji i brzini kretanja
     void moveScreen(float playerPosY, float playerVerticalSpeed) 
     { 
-        speed = level;
+        if(level<10) //recimo da ubrza 10 puta, a onda ide tom brzinom
+          speed = level;
+        else speed=10; 
         if (playerPosY < height/4 && playerVerticalSpeed < 0) // Ako je blizu vrhu i krece se prema gore
             speed += abs(playerVerticalSpeed) * map(playerPosY, height/4, -10, 0, 1); // Racunamo koliko ce se pomaknuti
 
@@ -398,7 +509,12 @@ class Screen {
     void setLevel(int v) 
     {
         level = v;
-    }
+        if(v==1&&prvi_prolazak==0)
+        {
+          sek=second(); 
+          prvi_prolazak=1; 
+        }
+      }
 
     ArrayList<Platform> getPlatforms()
     {
@@ -620,7 +736,7 @@ class Character {
             startingJumpSpeed = vx; // Potrebno radi odabire sprite-a
             jumpedFromPlatform = true; // Oznacavamo da je skocio sa platforme a ne pao
 
-            if (currentPlatformIndex > 4) // Ako prijedjemo cetvrtu platformu onda se ekran pocinje kretati i pali se timer
+            if (currentPlatformIndex >= 4) // Ako prijedjemo cetvrtu platformu onda se ekran pocinje kretati i pali se timer
             {
                 screen.setLevel(1);
             }
@@ -776,6 +892,7 @@ void setup()
 
     boards = new Leaderboards(); 
 
+
     
 }
 
@@ -824,7 +941,6 @@ void startScreen()
 void gameScreen()
 {  
     
-
     background(100);
 
     mainScreen.draw();
@@ -832,6 +948,7 @@ void gameScreen()
     player.move(); // U njemu pomicemo i crtamo
 
     mainScreen.moveScreen(player.positionY(), player.verticalSpeed());
+    
 }
 
 void endScreen()

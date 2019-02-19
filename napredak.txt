@@ -11,3 +11,4 @@ ako se skoci i drzi neki smjer onda se neprestano skace i skakanje sa visih plat
 Kretanje čim popravim treba počet radit na dobivanju visine iz skokova, pomicanju ekrana sukladno brzini i comboi.
 8.2.[Zvone] Popravljeni bugovi sa kretanjem, dodani novi bugovi. Kretanje je manje vise solidno sad a ostaje fine tuning sa fizikom. Treba i level design rijesiti. Moramo odrediti
 kako ce se nove platforme pojavljivat i koliko ce bit random faktora.
+19.2.[Bojana] Stavila sam da se ubrzava maksimalno 10 puta, nije baš da će itko doći do tu, ali nikad se ne zna. Napravljen sat.

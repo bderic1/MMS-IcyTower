@@ -25,8 +25,6 @@ import ddf.minim.*;
 
 // FIXME: Naknadna upisivanja u ljestvicu najboljih ne upisuju dobro
 
-// TODO: Nacrtati sat za timer?
-
 
 // Ljestvice najboljih rezultata
 // Format je "placement floor combo player"
@@ -333,7 +331,6 @@ class Screen {
             pl.draw();
         }
 
-        // TODO: Nacrtati sat za timer?
 /*
         // TImer za levele
         fill(255);
@@ -360,8 +357,6 @@ class Screen {
             levelTimer = 0;
         }
 
-
-
     }
 
     void crtaj_sat(int lvl)
@@ -369,15 +364,15 @@ class Screen {
 
       if(lvl==0)
       {
-      noStroke();
-      ellipseMode(RADIUS);
-      fill(255, 247, 150);
-      ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8);
+        noStroke();
+        ellipseMode(RADIUS);
+        fill(255, 247, 150);
+        ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8);
 
-      ellipseMode(CENTER);
-      fill(255);
-      ellipse(cx, cy, clockDiameter, clockDiameter);
-      // Draw the hands of the clock
+        ellipseMode(CENTER);
+        fill(255);
+        ellipse(cx, cy, clockDiameter, clockDiameter);
+        // Draw the hands of the clock
         stroke(255,0,0);
         strokeWeight(7);
         line(cx, cy, cx , cy - HALF_PI *secondsRadius);
@@ -388,24 +383,30 @@ class Screen {
           float x = cx + cos(angle) * secondsRadius;
           float y = cy + sin(angle) * secondsRadius;
           vertex(x, y);
-  }
-  endShape();
+          }
+        endShape();
       }
 
       else
       {
+        noStroke();
+        ellipseMode(RADIUS);
+        fill(255, 247, 150);
+        ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8);
 
-      noStroke();
-      ellipseMode(RADIUS);
-      fill(255, 247, 150);
-      ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8);
+        ellipseMode(CENTER);
+        fill(255);
+        ellipse(cx, cy, clockDiameter, clockDiameter);
 
-      ellipseMode(CENTER);
-      fill(255);
-      ellipse(cx, cy, clockDiameter, clockDiameter);
+        float s = map((second()-sek)*2, 0, 60, 0, TWO_PI)-HALF_PI;
 
-      float s = map((second()-sek)*2, 0, 60, 0, TWO_PI)-HALF_PI;
+// TODO: Ovo s mikrofonijo na hurry je problem do Inicijalizacije sa ==0 i onda pozivanja fje na 0,
+        //ali sve što sam do sad pokušala ne rješava problem
 
+        if((s+HALF_PI)%TWO_PI==0)
+          hurry_up=minim.loadFile("hurry_up.wav");
+        if((s+HALF_PI)%TWO_PI== 0.5 )
+          hurry_up.close();
         if((s+HALF_PI)%TWO_PI>=0 && (s+HALF_PI)%TWO_PI<0.5 && prvi_prolazak>1)
         {
           hurry();
@@ -432,12 +433,13 @@ class Screen {
           float x = cx + cos(angle) * secondsRadius;
           float y = cy + sin(angle) * secondsRadius;
           vertex(x, y);
-  }
-  endShape();
-  if(prvi_prolazak==1 && s>0)
-      prvi_prolazak++;
+          }
+        endShape();
+        if(prvi_prolazak==1 && s>0)
+          prvi_prolazak++;
+        }
       }
-}
+
     void hurry()
     {
       float r=random(-2,2);
@@ -448,7 +450,19 @@ class Screen {
       if (var>255)var=0;
       textSize(60);
       text("Hurry up!", height/2+r, width/3+r);
+      hurry_up.play();
 
+    }
+
+    void napisi(String s)
+    {
+      textAlign(CENTER);
+      textFont(font);
+      fill(color(var, 255, 255));
+      var++;
+      if (var>255)var=0;
+      textSize(60);
+      text(s, height/2, width/2);
     }
 
 
@@ -479,16 +493,7 @@ class Screen {
             pl.draw();
         }
 
-        // TODO: Nacrtati sat za timer?
-
-        // TImer za levele
-        fill(255);
-        rect(5, 345, 90, 20);
-        fill(0);
-        rect(10, 350, 80, 10);
-        fill(125);
-        float timerMappedValue = map(levelTimer, 0, 1800, 0, 80);
-        rect(10 + 80 - timerMappedValue, 350, timerMappedValue, 10);
+        crtaj_sat(0);
 
     }
 
@@ -750,6 +755,7 @@ class Character {
         posy += screen.getSpeed();
     }
 
+
     boolean checkForCombo() // Provjeravamo je li combo
     {
         // Sa wiki:
@@ -758,6 +764,8 @@ class Character {
         // or fails to make a jump within a certain time frame (about 3 seconds).
         if(currentPlatformNumber == previousPlatformNumber + 1 || previousPlatformNumber > currentPlatformNumber || comboTimer < 0 )
         {
+          //ovdje staviti fju za provjeru koji zvuk ide oviso o broju comboCount
+            koji_zvuk(comboCount);
             if(comboCount > highestCombo) highestCombo = comboCount;
             comboCount = 0;
             comboTimer = 0;
@@ -870,6 +878,73 @@ class Character {
         return newRecord;
     }
 
+    //htjela bih napisati funkciju koja će primati comboCount i na temelju toga pustiti
+    //odgovarajuci AudioPlayer
+    void koji_zvuk(int combo)
+    {
+      if(4<=combo && combo<=6)
+      {
+        good.play();
+        good=minim.loadFile("good.wav");
+        mainScreen.napisi("Good!");
+      }
+      else if(7<=combo && combo<=14)
+      {
+        sweet.play();
+        sweet=minim.loadFile("sweet.wav");
+        mainScreen.napisi("Sweet!");
+      }
+      else if(15<=combo && combo<=24)
+      {
+        great.play();
+        great=minim.loadFile("great.wav");
+        mainScreen.napisi("Great!");
+      }
+      else if(25<=combo && combo<=34)
+      {
+        superb.play();
+        superb=minim.loadFile("super.wav");
+        mainScreen.napisi("Super!");
+      }
+      else if(35<=combo && combo<=49)
+      {
+        wow.play();
+        wow=minim.loadFile("wow.wav");
+        mainScreen.napisi("WOW!");
+      }
+      else if(50<=combo && combo<=69)
+      {
+        amazing.play();
+        amazing=minim.loadFile("amazing.wav");
+        mainScreen.napisi("Amazing!");
+      }
+      else if(70<=combo && combo<=99)
+      {
+        extreme.play();
+        extreme=minim.loadFile("extreme.wav");
+        mainScreen.napisi("Extreme!");
+      }
+      else if(100<=combo && combo<=139)
+      {
+        fantastic.play();
+        fantastic=minim.loadFile("fantastic.wav");
+        mainScreen.napisi("Fantastic!");
+      }
+      else if(140<=combo && combo<=199)
+      {
+        splendid.play();
+        splendid=minim.loadFile("splendid_sala.wav");
+        mainScreen.napisi("Splendid!");
+      }
+      else if(combo>=199)
+      {
+        no_way.play();
+        no_way=minim.loadFile("no_way.wav");
+        mainScreen.napisi("NO WAY!");
+      }
+
+
+    }
 }
 
 int stanje=0, var=0, currentLetter=0;
@@ -923,7 +998,6 @@ void setup()
     theme=minim.loadFile("theme.mp3"); //ova ide na početni ekran, postavljeno
     try_again=minim.loadFile("try_again.wav");
     wow=minim.loadFile("wow.wav");
-
 
 }
 

@@ -12,3 +12,4 @@ Kretanje čim popravim treba počet radit na dobivanju visine iz skokova, pomica
 8.2.[Zvone] Popravljeni bugovi sa kretanjem, dodani novi bugovi. Kretanje je manje vise solidno sad a ostaje fine tuning sa fizikom. Treba i level design rijesiti. Moramo odrediti
 kako ce se nove platforme pojavljivat i koliko ce bit random faktora.
 19.2.[Bojana] Stavila sam da se ubrzava maksimalno 10 puta, nije baš da će itko doći do tu, ali nikad se ne zna. Napravljen sat.
+20.2.[Bojana] Problem je u hurry što moram inicijalizirati zvuk nekad, a njemu se moji izbori trenutka iz nekog razloga ne sviđaju i onda dobijam mikrofoniju. Treba još staviti zvukove skakutanja.

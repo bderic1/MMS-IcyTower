@@ -7,16 +7,17 @@
 import java.util.Iterator;
 import java.util.Map;
 import java.lang.*;
+import ddf.minim.*;
 
 
 // FIXME: Ima bug koji ponekad pri skakanju blizu vrha dovodi do toga da lik zna proci kroz platforme.
 //        Cini mi se da se to sada desava samo kada je combo sprite
 //        Mozda popravljeno?
-// FIXME: Postoji bug s brojanjem platformi, može se doći do 10.platforme bez da on registrira da sam prešla 4.platfomu ako ne skačeš jednu po jednu. 
-//        
+// FIXME: Postoji bug s brojanjem platformi, može se doći do 10.platforme bez da on registrira da sam prešla 4.platfomu ako ne skačeš jednu po jednu.
+//
 // TODO: TImeri su trenutacno ovisni o framerateu. Ja mislim da je to bolje nego realtime jer ako netko ima manji framerate odmah mu je i sporija igra
 //       jer je sve ovisno o framerateu.
-//       Mozemo implementirati da se ne pomice ovisno o framerateu. Tipa ako se lik pomice 60 pixela na 60 frameova da se pomice i 60 u 30 frameova tj 
+//       Mozemo implementirati da se ne pomice ovisno o framerateu. Tipa ako se lik pomice 60 pixela na 60 frameova da se pomice i 60 u 30 frameova tj
 //       1 px po frameu u 60 ili 2 px po frameu ako je 30 fps. (Mozda dovoljno sve kretnje mnozit sa 60/frameRate ?)
 //       Al posto bi to moglo dovest do malo previse bugova onda mozda bolje ovako jer ipak je ne plasiramo na trziste
 
@@ -34,20 +35,20 @@ class Leaderboards {
     int newCombo, newFloor, indexOfBestCombo, indexOfBestFloor;
 
     // Ucitava podatke iz datoteke i sprema u listu tako da pristupamo npr drugom najboljem combu i njegovom imenu sa bestCombo.get(1).get("player")
-    Leaderboards() 
+    Leaderboards()
     {
         String[] lines = loadStrings("leaderboards.txt");
-        for (int i = 1 ; i < lines.length; i++) 
+        for (int i = 1 ; i < lines.length; i++)
         {
             if(i < 6)
             {
                 String[] values = lines[i].split(" ");
                 bestCombo.add(new HashMap<String, String>());
-                
+
                 bestCombo.get(i-1).put("floor", values[1]);
                 bestCombo.get(i-1).put("combo", values[2]);
                 bestCombo.get(i-1).put("player", values[3]);
-            } else if (i > 6) 
+            } else if (i > 6)
             {
                 String[] values = lines[i].split(" ");
                 bestFloor.add(new HashMap<String, String>());
@@ -126,13 +127,13 @@ class Leaderboards {
 
             bestFloor.remove(bestFloor.size() - 1);
         }
-            
+
     }
 
 
 
     // Format je "placement foor combo player"
-    void saveToFile() 
+    void saveToFile()
     {
         HashMap<String, String> el;
         String[] outputString = new String[12];
@@ -204,46 +205,46 @@ class Platform {
         return platformNumber;
     }
 
-    boolean isOnPlatform(Character player) 
-    { 
-        if (player.verticalSpeed() < 0) return false; // Ako igrac ide prema gore onda ne pada na platformu 
+    boolean isOnPlatform(Character player)
+    {
+        if (player.verticalSpeed() < 0) return false; // Ako igrac ide prema gore onda ne pada na platformu
 
 
         if ( player.positionY() + player.getSpriteHeight()/2 >= y - player.verticalSpeed()  && // Hoce li igrac pasti na platformu u iducem frame-u
             player.positionY() + player.getSpriteHeight()/2  <= y &&  // Je li igrac iznad platforme?
             player.positionX() + player.getSpriteWidth()/2 >= x &&  // Je li desno rub igraca desno od lijevog ruba platforme
             player.positionX() - player.getSpriteWidth()/2 <= x + w ) // Je li lijevi rub igraca lijevo od desnog ruba platforme
-        { 
+        {
             player.setPositionY(y - player.getSpriteHeight()/2); // Postavljamo igraca na platformu
             return true;
-        } 
-        
+        }
+
         return false;
-        
+
     }
 
     // | -1 = lijevi rub | 0 = nije na rubu | 1 = desni rub |
-    int isOnLedge(Character player) 
-    { 
+    int isOnLedge(Character player)
+    {
         if (player.positionX() - player.getSpriteWidth()/3 <= x + 10)     return -1;
         if (player.positionX() + player.getSpriteWidth()/3 >= x + w - 10) return 1;
         return 0;
     }
 
-    boolean isOutOfBounds() 
+    boolean isOutOfBounds()
     {
-        return (y > height); 
+        return (y > height);
     }
 
-    void draw() 
+    void draw()
     {
-      
+
         // Crtaj platfomu
         fill(#770077);
         rect(x, y, w, h);
 
         // Na svaku desetu napisi broj platforme
-        if (platformNumber % 10 == 0) 
+        if (platformNumber % 10 == 0)
         {
             textFont(createFont("Arial Bold", 18));
             fill(255);
@@ -252,7 +253,7 @@ class Platform {
     }
 
     // Spusti platformu na ekranu
-    void reduceHeight(float amount) 
+    void reduceHeight(float amount)
     {
         y += amount;
     }
@@ -268,15 +269,15 @@ class Screen {
     private float screenStart = 200, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
     private float maxPlatformWidth = 400;
     //podaci za sat
-    public int sek; 
+    public int sek;
     int cx, cy, prvi_prolazak=0;
     float secondsRadius,clockDiameter ;
 
-    Screen() 
-    {    
+    Screen()
+    {
         level = 0; // Pocetna brzina treba bit nula jer se platforme tek micu kada igrac stane na platformu iznad cetvrte
         platforms = new ArrayList<Platform>();
-        
+
         //postavke sata
 
         int clock_radius = 50;
@@ -285,24 +286,24 @@ class Screen {
         cx = 70;
         cy = 370;
     }
-   
 
-    void draw() 
-    { 
+
+    void draw()
+    {
         // Crtamo prvo rubove ekrana
         fill(#000077);
         rect(0, 0, screenStart, height); // Lijevi rub
         rect(screenEnd, 0, screenStart, height); // Desni rub (sirina je ista u oba ruba)
 
         // Stvaramo prve platforme na pocetku igre
-        if (platforms.size() == 0) 
+        if (platforms.size() == 0)
         {
             for (int i = 0; i < noOfPlatforms; i++) // Dodajemo platformi koliko treba
-            { 
+            {
                 if (i == 0) // Najdonja platforma
-                { 
+                {
                     platforms.add(new Platform(screenStart + 0, height-20, screenEnd - screenStart, 1));
-                } else 
+                } else
                 {
                     float platformWidth = random(maxPlatformWidth - 150, maxPlatformWidth); // Randomiziramo sirinu platformi
                     platforms.add(new Platform(random(screenStart + 10, screenEnd - platformWidth - 10), // x
@@ -312,7 +313,7 @@ class Screen {
                 }
             }
         } else if (platforms.get(0).isOutOfBounds()) // Ako je najdonja platforma nestala onda nju izbacujemo iz liste i dodajemo novu platformu na vrh
-        { 
+        {
             platforms.remove(0);
             Platform platformBefore = platforms.get(platforms.size() - 1);
             int platNo = platformBefore.platformNumber + 1;
@@ -321,13 +322,13 @@ class Screen {
             float platformWidth = (platNo < 200) ? random(maxPlatformWidth*(1-(platNo/1000)) - 150, maxPlatformWidth*(1-(platNo/1000))) : 200;
 
             // Dodajemo novu platformu i ako je neki kat koji je djeljiv sa 50 onda je sirine cijelog ekrana
-            platforms.add(new Platform(( (platNo%50 == 0) ? screenStart : random(screenStart + 10, screenEnd - platformWidth - 10) ), 
-                                       platformBefore.y - (height/noOfPlatforms), 
-                                       (platNo%50 == 0) ? screenEnd - screenStart :  platformWidth, 
+            platforms.add(new Platform(( (platNo%50 == 0) ? screenStart : random(screenStart + 10, screenEnd - platformWidth - 10) ),
+                                       platformBefore.y - (height/noOfPlatforms),
+                                       (platNo%50 == 0) ? screenEnd - screenStart :  platformWidth,
                                        platNo));
         }
 
-        for ( Platform pl : platforms) 
+        for ( Platform pl : platforms)
         {
             pl.draw();
         }
@@ -340,41 +341,41 @@ class Screen {
         fill(0);
         rect(10, 350, screenStart - 20, 10);
         fill(125);
-        
+
         float timerMappedValue = map(levelTimer, 0, 1800, 0, screenStart - 20);
         rect(10 + screenStart - 20 - timerMappedValue, 350, timerMappedValue, 10);
         */
         if(level==0)
         crtaj_sat(0);
         else
-        crtaj_sat(1); 
-        
+        crtaj_sat(1);
+
         // Provjera timera i levela
         if(level == 0) return; // Ako jos nije pocelo onda ne radi nista
-        
+
         levelTimer++;
-        if(levelTimer == 1800) // 30 sekundi 
+        if(levelTimer == 1800) // 30 sekundi
         {
             level++;
             levelTimer = 0;
         }
 
-       
-        
+
+
     }
 
     void crtaj_sat(int lvl)
-    {  
+    {
 
       if(lvl==0)
       {
       noStroke();
-      ellipseMode(RADIUS);  
-      fill(255, 247, 150); 
-      ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8); 
-    
-      ellipseMode(CENTER);  
-      fill(255); 
+      ellipseMode(RADIUS);
+      fill(255, 247, 150);
+      ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8);
+
+      ellipseMode(CENTER);
+      fill(255);
       ellipse(cx, cy, clockDiameter, clockDiameter);
       // Draw the hands of the clock
         stroke(255,0,0);
@@ -390,40 +391,40 @@ class Screen {
   }
   endShape();
       }
-      
+
       else
       {
 
       noStroke();
-      ellipseMode(RADIUS);  
-      fill(255, 247, 150); 
-      ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8); 
-    
-      ellipseMode(CENTER);  
-      fill(255); 
+      ellipseMode(RADIUS);
+      fill(255, 247, 150);
+      ellipse(cx, cy, clockDiameter/2+8, clockDiameter/2+8);
+
+      ellipseMode(CENTER);
+      fill(255);
       ellipse(cx, cy, clockDiameter, clockDiameter);
-  
+
       float s = map((second()-sek)*2, 0, 60, 0, TWO_PI)-HALF_PI;
-      
+
         if((s+HALF_PI)%TWO_PI>=0 && (s+HALF_PI)%TWO_PI<0.5 && prvi_prolazak>1)
         {
-          hurry(); 
+          hurry();
           float r = random(-2,2);
           noStroke();
-          ellipseMode(RADIUS);  
-          fill(255, 247, 150); 
-          ellipse(cx+r, cy+r, clockDiameter/2+8, clockDiameter/2+8); 
-      
-          ellipseMode(CENTER);  
-          fill(255);  
+          ellipseMode(RADIUS);
+          fill(255, 247, 150);
+          ellipse(cx+r, cy+r, clockDiameter/2+8, clockDiameter/2+8);
+
+          ellipseMode(CENTER);
+          fill(255);
           ellipse(cx+r, cy+r, clockDiameter-s, clockDiameter+s);
         }
         // Draw the hands of the clock
         stroke(255,0,0);
         strokeWeight(7);
         line(cx, cy, cx + cos(s) * secondsRadius, cy + sin(s) * secondsRadius);
-        
-        
+
+
         strokeWeight(2);
         beginShape(POINTS);
         for (int a = 0; a < 360; a+=30) {
@@ -434,33 +435,33 @@ class Screen {
   }
   endShape();
   if(prvi_prolazak==1 && s>0)
-      prvi_prolazak++; 
+      prvi_prolazak++;
       }
 }
     void hurry()
     {
       float r=random(-2,2);
       textAlign(CENTER);
-      textFont(font); 
+      textFont(font);
       fill(color(var, 255, 255));
       var++;
       if (var>255)var=0;
       textSize(60);
-      text("Hurry up!", height/2+r, width/3+r);    
-    
+      text("Hurry up!", height/2+r, width/3+r);
+
     }
 
 
     // Pomakni ekran ovisno o igracevoj poziciji i brzini kretanja
-    void moveScreen(float playerPosY, float playerVerticalSpeed) 
-    { 
+    void moveScreen(float playerPosY, float playerVerticalSpeed)
+    {
         if(level<10) //recimo da ubrza 10 puta, a onda ide tom brzinom
           speed = level;
-        else speed=10; 
+        else speed=10;
         if (playerPosY < height/4 && playerVerticalSpeed < 0) // Ako je blizu vrhu i krece se prema gore
             speed += abs(playerVerticalSpeed) * map(playerPosY, height/4, -10, 0, 1); // Racunamo koliko ce se pomaknuti
 
-        for ( Platform pl : platforms) 
+        for ( Platform pl : platforms)
         {
             pl.reduceHeight(speed);
         }
@@ -473,7 +474,7 @@ class Screen {
         rect(0, 0, screenStart, height); // Lijevi rub
         rect(screenEnd, 0, screenStart, height); // Desni rub (sirina je ista u oba ruba)
 
-        for ( Platform pl : platforms) 
+        for ( Platform pl : platforms)
         {
             pl.draw();
         }
@@ -501,18 +502,18 @@ class Screen {
         return screenEnd;
     }
 
-    float getSpeed() 
-    { 
+    float getSpeed()
+    {
         return speed;
     }
 
-    void setLevel(int v) 
+    void setLevel(int v)
     {
         level = v;
         if(v==1&&prvi_prolazak==0)
         {
-          sek=second(); 
-          prvi_prolazak=1; 
+          sek=second();
+          prvi_prolazak=1;
         }
       }
 
@@ -527,30 +528,30 @@ class Screen {
 class Character {
 
     private float posx, posy;
-    private float vx=0, vy=0; 
+    private float vx=0, vy=0;
     private float ax=.32, ay=.64;
     private PImage sprite;
     private int run = 0, ledge = 0, standing = 0, rotation = 0;
     private boolean onGround=false, jumpedFromPlatform=false, firstLanding=false, isInCombo=false, newRecord = false;
     private Screen screen;
     String character;
-    private HashMap<String, PImage> sprites = new HashMap<String, PImage>();   
+    private HashMap<String, PImage> sprites = new HashMap<String, PImage>();
     private int currentPlatformIndex, currentPlatformNumber, previousPlatformNumber, comboCount, comboTimer = 0, highestCombo = 0;
     private float startingJumpSpeed;
     Leaderboards lboards;
 
-    Character( Screen scr, String _character, Leaderboards _lboards) 
+    Character( Screen scr, String _character, Leaderboards _lboards)
     {
         screen = scr;
         lboards = _lboards;
-        posx = (screen.getScreenStart() + screen.getScreenEnd())/2-30; 
+        posx = (screen.getScreenStart() + screen.getScreenEnd())/2-30;
         posy = height-55;
         character = _character;
         loadSprites();
         sprite = sprites.get("jumping");
     }
 
-    void loadSprites() 
+    void loadSprites()
     {
         imageMode(CENTER);
         sprites.put("jumping", loadImage(character + "-jumping.png"));
@@ -561,28 +562,28 @@ class Character {
         sprites.put("falling-right", loadImage(character + "-falling-right.png"));
         sprites.put("falling-left", loadImage(character + "-falling-left.png"));
         sprites.put("combo", loadImage(character + "-combo.png"));
-        for (int i = 0; i < 4; ++i) 
+        for (int i = 0; i < 4; ++i)
         {
             sprites.put("run-" + str(i) + "-left", loadImage(character + "-run-" + str(i) + "-left.png"));
             sprites.put("run-" + str(i) + "-right", loadImage(character + "-run-" + str(i) + "-right.png"));
 
             if (i < 3) // Standing nema 3
-            { 
+            {
                 sprites.put("standing-" + str(i), loadImage(character + "-standing-" + str(i)+ ".png"));
             }
             if (i < 2) // Ledge nema 2 i 3
-            { 
+            {
                 sprites.put("left-ledge-" + str(i), loadImage(character + "-left-ledge-" + str(i) + ".png"));
                 sprites.put("right-ledge-" + str(i), loadImage(character + "-right-ledge-" + str(i) + ".png"));
             }
         }
     }
 
-    void setSprite() 
-    {        
+    void setSprite()
+    {
         if(isInCombo && abs(startingJumpSpeed) > 10 && jumpedFromPlatform) // Crta "combo" sprite i rotira ga
         {
-            sprite = sprites.get("combo");            
+            sprite = sprites.get("combo");
             pushMatrix();
             translate(posx, posy);
             rotate(rotation/5); rotation++;
@@ -590,27 +591,27 @@ class Character {
             popMatrix();
             sprite.resize(0, 70);
         }
-        else 
+        else
         {
         if (onGround)
         {
             if (abs(vx) < 1) // Ako se ne krece i stoji na zemlji
-            { 
+            {
 
-                // Ako je igrac na rubu platforme 
+                // Ako je igrac na rubu platforme
                 int isPlayerOnLedge = screen.getPlatforms().get(currentPlatformIndex).isOnLedge(this);
-                if (abs(isPlayerOnLedge) == 1) 
-                { 
+                if (abs(isPlayerOnLedge) == 1)
+                {
                     String image = "-ledge-"+str(ledge/10);
                     ledge = (ledge+1)%20; // Mijenjamo sprite za rub svako 10 frameova
                     image = ((isPlayerOnLedge == -1) ? "left" : "right") + image;
                     sprite = sprites.get(image);
-                } else 
+                } else
                 {
                     sprite = sprites.get("standing-"+str(standing/20));
                     standing = (standing+1)%60; // Mijenjamo sprite za stajanje svako 20 frameova
                 }
-            } else 
+            } else
             {
                 String image = "run-"+str(run/10);
                 run = (run+1)%40; // Mijenjamo sprite za trcanje svako 10 frameova
@@ -620,15 +621,15 @@ class Character {
         } else
         {
             if (abs(vx) < 1) // Ako se ne krece desno ili lijevo
-            { 
-                sprite = sprites.get("jumping");
-            } else 
             {
-                
+                sprite = sprites.get("jumping");
+            } else
+            {
+
                 if (abs(vy) < 3) // Ako leti i u vrhu je skoka
-                { 
+                {
                     sprite = sprites.get("jumping-top" + ( (vx < 0) ? "-left" : "-right") );
-                } else 
+                } else
                 {
                     String image = (vy < 0) ? "jumping" : "falling";
                     image += (vx < 0) ? "-left" : "-right";
@@ -649,7 +650,7 @@ class Character {
         drawCombo();
     }
 
-   
+
     void move()
     {
         horizontalMovement();
@@ -659,20 +660,20 @@ class Character {
         setSprite();
 
         drawCombo();
-        
+
 
     }
 
     void drawCombo()
     {
         // Crtamo counter za combo ako se desava combo
-        if(comboCount > 0) 
+        if(comboCount > 0)
         {
             textFont(createFont("Arial Bold", 18));
             fill(255);
             text(str(comboCount) + "\n FLOORS!", 40, 270);
         }
-        
+
 
         // Crtamo bar za combo
         fill(255);
@@ -696,9 +697,9 @@ class Character {
             vx -= (vx > 0) ? 1.5*ax : ax; // Ako se vec krece desno onda da se malo brze krece prema lijevo pa da brze uspori
         }
         if (rightKeyPressed)
-        { 
+        {
             vx += (vx < 0) ? 1.5*ax : ax;
-        } 
+        }
         if (onGround && !leftKeyPressed && !rightKeyPressed)
         {
             vx *= 0.9; // Usporavanje ako se ne krece
@@ -714,7 +715,7 @@ class Character {
         // Vertikalne kretnje (skakanje)
         if (isOnGround())
         {
-            vy=0; 
+            vy=0;
             onGround=true;
             jumpedFromPlatform = false;
         } else
@@ -730,7 +731,7 @@ class Character {
         //ako smo stisli space i nismo u letu nego smo na površini (kada je onGround true), onda skacemo
         if (spaceKeyPressed && onGround)
         {
-            vy=-14 - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj 
+            vy=-14 - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj
             onGround=false;
             previousPlatformNumber = currentPlatformNumber;
             startingJumpSpeed = vx; // Potrebno radi odabire sprite-a
@@ -750,12 +751,12 @@ class Character {
     }
 
     boolean checkForCombo() // Provjeravamo je li combo
-    { 
+    {
         // Sa wiki:
-        // A combo ends when a player makes a jump which covers only one floor, 
-        // falls off a floor and lands on a lower floor, 
+        // A combo ends when a player makes a jump which covers only one floor,
+        // falls off a floor and lands on a lower floor,
         // or fails to make a jump within a certain time frame (about 3 seconds).
-        if(currentPlatformNumber == previousPlatformNumber + 1 || previousPlatformNumber > currentPlatformNumber || comboTimer < 0 ) 
+        if(currentPlatformNumber == previousPlatformNumber + 1 || previousPlatformNumber > currentPlatformNumber || comboTimer < 0 )
         {
             if(comboCount > highestCombo) highestCombo = comboCount;
             comboCount = 0;
@@ -774,7 +775,7 @@ class Character {
         {
             firstLanding = true;
         }
-        
+
         if(comboCount != 0) // Timer za combo se ne mice ako nismo u combou
             comboTimer--;
         isInCombo = true;
@@ -788,12 +789,13 @@ class Character {
         {
             newRecord = lboards.checkForHighScore(highestCombo, currentPlatformNumber);
             stanje=2;
+            novi_high_score=minim.loadFile("novi_high_score.wav");
         }
-             
+
 
         //ako harold dođe do vrha, ne može ići više od toga (ostalo -10 jer u originalu on udje malo u strop al vuce ekran za sobom pa nema problema i izgleda prirodno)
         if (posy <= -10)
-            posy=-10; 
+            posy=-10;
 
         // Treba nam jer su slike centrirane
         float spriteHalf = sprite.width/2;
@@ -808,9 +810,9 @@ class Character {
         }
     }
 
-    boolean isOnGround() 
+    boolean isOnGround()
     {
-        for ( Platform pl : screen.getPlatforms()) 
+        for ( Platform pl : screen.getPlatforms())
         {
             if (pl.isOnPlatform(this))
             {
@@ -822,43 +824,43 @@ class Character {
         return false;
     }
 
-     // Dijelimo sa 2 kad je combo sprite jer je on centriran a ne pocinje od ruba 
-    float getSpriteWidth() 
+     // Dijelimo sa 2 kad je combo sprite jer je on centriran a ne pocinje od ruba
+    float getSpriteWidth()
     {
         return sprite.width;
     }
 
-    float getSpriteHeight() 
+    float getSpriteHeight()
     {
         return 70;
     }
 
-    float positionX() 
+    float positionX()
     {
         return posx;
     }
 
-    float positionY() 
+    float positionY()
     {
         return posy;
     }
 
-    void setPositionY(float position) 
+    void setPositionY(float position)
     {
         posy = position;
     }
 
-    float verticalSpeed() 
+    float verticalSpeed()
     {
         return vy+ay; // Dodajemo u ay jer nam je bitno gdje ce lik biti iduci frame tako da znamo hoce li sletiti na platformu
     }
 
-    void setCurrentPlatformIndex(int platformNo) 
+    void setCurrentPlatformIndex(int platformNo)
     {
         currentPlatformIndex = platformNo;
     }
 
-    void setCurrentPlatformNumber(int platformNo) 
+    void setCurrentPlatformNumber(int platformNo)
     {
         currentPlatformNumber = platformNo;
     }
@@ -870,16 +872,22 @@ class Character {
 
 }
 
-int stanje=0, var=0, currentLetter=0; 
-PFont font; 
+int stanje=0, var=0, currentLetter=0;
+PFont font;
 PImage bg;
 Screen mainScreen;
 Character player;
 boolean leftKeyPressed = false, rightKeyPressed = false, spaceKeyPressed = false;
 boolean usernameEntered = false;
 String pickedCharacter;
-Leaderboards boards; 
+Leaderboards boards;
 char[] username = new char[] {'A', 'A', 'A'};
+
+Minim minim;
+//popis mogućih sound datoteka
+AudioPlayer amazing, extreme, fantastic, good, great, hurry_up, jo, no_way;
+AudioPlayer novi_high_score, game_ending, power, skok_jedna, skok_vise, skok_nekoliko;
+AudioPlayer in_game, splendid, superb, sweet, theme, try_again, wow ;
 
 
 void setup()
@@ -890,18 +898,41 @@ void setup()
     colorMode(HSB);
     noStroke();
 
-    boards = new Leaderboards(); 
+    boards = new Leaderboards();
+    minim= new Minim(this);
+
+    //Inicijalizacija svih AudioPlayera
+    amazing=minim.loadFile("amazing.wav");
+    extreme=minim.loadFile("extreme.wav");
+    fantastic=minim.loadFile("fantastic.wav");
+    good=minim.loadFile("good.wav");
+    great=minim.loadFile("great.wav");
+    hurry_up=minim.loadFile("hurry_up.wav");
+    jo=minim.loadFile("jo.wav");//postavljeno
+    no_way=minim.loadFile("no_way.wav");
+    novi_high_score=minim.loadFile("novi_high_score.wav");//postavljeno
+    game_ending=minim.loadFile("game_ending.wav");
+    power=minim.loadFile("power.wav");
+    skok_jedna=minim.loadFile("skok_jedna.wav");
+    skok_vise=minim.loadFile("skok_vise.wav");
+    skok_nekoliko=minim.loadFile("skok_nekoliko.wav");
+    in_game=minim.loadFile("in_game.mp3"); //ovo je pjesma u igri, postavljeno
+    splendid=minim.loadFile("splendid_sala.wav");
+    superb=minim.loadFile("super.wav");
+    sweet=minim.loadFile("sweet.wav");
+    theme=minim.loadFile("theme.mp3"); //ova ide na početni ekran, postavljeno
+    try_again=minim.loadFile("try_again.wav");
+    wow=minim.loadFile("wow.wav");
 
 
-    
 }
 
 void draw()
 {
     if (stanje==0)
-        startScreen(); 
+        startScreen();
     else if (stanje==1)
-        gameScreen(); 
+        gameScreen();
     else if (stanje==2)
         endScreen();
     else if (stanje==3)
@@ -915,8 +946,8 @@ void startScreen()
     bg.resize(width, height);
     background(bg);
     textAlign(CENTER);
-    textSize(70); 
-    textFont(font); 
+    textSize(70);
+    textFont(font);
     fill(color(var, 255, 255));
     var++;
     if (var>255)var=0;
@@ -926,10 +957,15 @@ void startScreen()
     text("ICY", 3*width/4, -height/5);
     text("TOWER", 3*width/4, -height/5+160);
     rotate(-PI/6);
-
+    theme.play();
+    if ( theme.position() == theme.length() )
+    {
+      theme.rewind();
+      theme.play();
+    }
     boards.drawOnStartScreen();
 
-    if (keyPressed && stanje==0 && (key == 'd' || key == 'h' || key == 'D' || key == 'H')) 
+    if (keyPressed && stanje==0 && (key == 'd' || key == 'h' || key == 'D' || key == 'H'))
     {
         pickedCharacter = (key == 'd' || key == 'D') ? "dave" : "harold";
         mainScreen = new Screen();
@@ -939,8 +975,7 @@ void startScreen()
 }
 
 void gameScreen()
-{  
-    
+{
     background(100);
 
     mainScreen.draw();
@@ -948,14 +983,23 @@ void gameScreen()
     player.move(); // U njemu pomicemo i crtamo
 
     mainScreen.moveScreen(player.positionY(), player.verticalSpeed());
-    
+
+    theme.close();
+    in_game.play();
+    jo.play();
+    if ( in_game.position() == in_game.length() )  //ako dođem do kraja, želim ponoviti pjesmu
+    {
+      in_game.rewind();
+      in_game.play();
+    }
+
 }
 
 void endScreen()
 {
     background(0);
     textAlign(CENTER);
-    textFont(font); 
+    textFont(font);
     fill(color(var, 255, 255));
     var++;
     if (var>255)var=0;
@@ -965,11 +1009,13 @@ void endScreen()
     textSize(20);
     text("Press 'R' to restart.", width/2, height/3+440);
 
-    
-    // Provjerava ako ima rekord i onda otvara prozor za upis usernamea
-    if(player.isThereANewRecord() && !usernameEntered) 
-    {
+    in_game.close();
+    jo.close();
 
+    // Provjerava ako ima rekord i onda otvara prozor za upis usernamea
+    if(player.isThereANewRecord() && !usernameEntered)
+    {
+        novi_high_score.play();
         fill(125);
         rect(width/7, height/7, 5*width/7, 5*height/7);
 
@@ -980,17 +1026,18 @@ void endScreen()
         textSize(40);
         text("NEW RECORD\nWrite your name:\n" + String.valueOf(us) + "\nPress ENTER on end", width/2, 2*height/7);
 
-        if (keyPressed && key == ENTER) 
+        if (keyPressed && key == ENTER)
         {
             usernameEntered = true;
             boards.addNewRecord(String.valueOf(username));
         }
     }
-    
-    if (usernameEntered && keyPressed && (key == 'r' || key == 'R')) 
+
+    if (usernameEntered && keyPressed && (key == 'r' || key == 'R'))
     {
         reset();
         usernameEntered = false;
+        novi_high_score.close();
     }
 }
 
@@ -1010,7 +1057,7 @@ void pauseScreen()
     text("Press 'M' to go to main menu.", 170, 300);
     textAlign(CENTER);
 
-    if (keyPressed && (key == 'r' || key == 'R')) 
+    if (keyPressed && (key == 'r' || key == 'R'))
     {
         reset();
     } else if (keyPressed && (key == 'm' || key == 'M'))
@@ -1022,6 +1069,10 @@ void pauseScreen()
 
 void reset() {
     mainScreen = new Screen();
+    //moraju se "restartati" za novo korištnenje, ne znam zašto, malo je bezveze.
+    in_game=minim.loadFile("in_game.mp3");
+    jo=minim.loadFile("jo.wav");
+
     player = new Character(mainScreen, pickedCharacter, boards);
     stanje = 1;
 }
@@ -1033,11 +1084,11 @@ void keyPressed() {
     if (key==CODED)
     {
         if (keyCode==LEFT)
-        { 
+        {
             leftKeyPressed = true;
         }
         if (keyCode==RIGHT)
-        { 
+        {
             rightKeyPressed = true;
         }
     } else if (key == ' ')
@@ -1057,11 +1108,11 @@ void keyReleased() {
     if (key==CODED)
     {
         if (keyCode==LEFT)
-        { 
+        {
             leftKeyPressed = false;
         }
         if (keyCode==RIGHT)
-        { 
+        {
             rightKeyPressed = false;
         }
     } else if (key == ' ')

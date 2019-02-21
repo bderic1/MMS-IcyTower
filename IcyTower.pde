@@ -436,14 +436,7 @@ class Screen {
 
         float s = map((second()-sek)*2, 0, 60, 0, TWO_PI)-HALF_PI;
 
-// TODO: Ovo s mikrofonijo na hurry je problem do Inicijalizacije sa ==0 i onda pozivanja fje na 0,
-        //ali sve što sam do sad pokušala ne rješava problem
-
-        if((s+HALF_PI)%TWO_PI==0)
-          hurry_up=minim.loadFile("hurry_up.wav");
-        if((s+HALF_PI)%TWO_PI== 0.5 )
-          hurry_up.close();
-        if((s+HALF_PI)%TWO_PI>=0 && (s+HALF_PI)%TWO_PI<0.5 && prvi_prolazak>1)
+        if((s+HALF_PI)%TWO_PI>=0 && (s+HALF_PI)%TWO_PI<0.4 && prvi_prolazak>1)
         {
           hurry();
           float r = random(-2,2);
@@ -478,6 +471,7 @@ class Screen {
 
     void hurry()
     {
+      //ispis obavijesti o ubrzavanju i postavljanje zvuka opomene
       float r=random(-2,2);
       textAlign(CENTER);
       textFont(font);
@@ -487,6 +481,11 @@ class Screen {
       textSize(60);
       text("Hurry up!", height/2+r, width/3+r);
       hurry_up.play();
+      if ( hurry_up.position() == hurry_up.length() )
+      {
+        hurry_up.close();
+        hurry_up=minim.loadFile("hurry_up.wav");
+      }
 
     }
 

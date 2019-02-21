@@ -1,12 +1,12 @@
 Highest combo
-1 0 0 AAA
-2 0 0 AAA
-3 0 0 AAA
-4 0 0 AAA
-5 0 0 AAA
+1 29 27 stj
+2 62 26 =+g
+3 25 25 KAC
+4 21 16 zvo
+5 14 16 +ad
 Highest floor
-1 0 0 AAA
-2 0 0 AAA
-3 0 0 AAA
-4 0 0 AAA
-5 0 0 AAA
+1 92 13 +ad
+2 62 26 =+g
+3 52 11 +AA
+4 29 27 stj
+5 25 25 KAC

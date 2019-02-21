@@ -23,7 +23,8 @@ import ddf.minim.*;
 
 // TODO: Asseti
 
-// FIXME: Naknadna upisivanja u ljestvicu najboljih ne upisuju dobro
+// FIXME: Naci način da supressam ENTER tipku jer kad odem u main menu iz zadnjeg ekrana ono odma skoči u igru i isto tako kad se upisuje username
+
 
 
 // Ljestvice najboljih rezultata
@@ -143,7 +144,7 @@ class Leaderboards {
             outputString[i+1] = str(i+1) + ' ' + el.get("floor") + ' ' + el.get("combo") + ' ' + el.get("player");
         }
 
-        outputString[5] = "Highest floor";
+        outputString[6] = "Highest floor";
         for( int i = 0; i < 5; ++i)
         {
             el = bestFloor.get(i);
@@ -157,26 +158,47 @@ class Leaderboards {
     {
         HashMap<String, String> el;
 
-        String comboString = "Highest combo\n# F C U";
-        for( int i = 0; i < 5; ++i)
-        {
-            el = bestCombo.get(i);
-            comboString += '\n' + str(i+1) + ". " + el.get("floor") + " " + el.get("combo") + "    " + el.get("player");
-        }
-
-        String floorString = "Highest floor\n# F C U";
-        for( int i = 0; i < 5; ++i)
-        {
-            el = bestFloor.get(i);
-            floorString += '\n' + str(i+1) + ". " + el.get("floor") + " " + el.get("combo") + "    " + el.get("player");
-        }
+        float textY = 4*height/7, comboX = 2*width/5, floorX = 3*width/5 + 50;
+        float tempY;
 
         textAlign(LEFT);
         PFont myFont = createFont("SansSerif", 30);
         textFont(myFont);
         fill(255);
-        text(comboString, 3*width/5, 5*height/7);
-        text(floorString, 4*width/5, 5*height/7);
+        text("Highest combo", comboX, textY);
+        text("Highest floor", floorX, textY);
+
+        myFont = createFont("SansSerif", 10);
+        textFont(myFont);
+        text("PLACE  FLOOR          COMBO           DUDE", comboX, textY+30);
+        text("PLACE  FLOOR          COMBO           DUDE", floorX, textY+30);
+
+        myFont = createFont("SansSerif", 30);
+        textFont(myFont);
+        fill(255);
+
+        tempY = textY+70;
+        for( int i = 0; i < 5; ++i)
+        {
+            el = bestCombo.get(i);
+            text(str(i+1), comboX, tempY);
+            text(el.get("floor"), comboX + 40, tempY);
+            text(el.get("combo"), comboX + 100, tempY);
+            text(el.get("player"), comboX+ 160, tempY);
+            tempY += 30;
+        }
+
+        tempY = textY+70;
+        for( int i = 0; i < 5; ++i)
+        {
+            el = bestFloor.get(i);
+            text(str(i+1), floorX, tempY);
+            text(el.get("floor"), floorX + 40, tempY);
+            text(el.get("combo"), floorX + 100, tempY);
+            text(el.get("player"), floorX+ 160, tempY);
+            tempY += 30;        
+            }
+
         textAlign(CENTER);
 
 
@@ -264,12 +286,14 @@ class Screen {
     private int level, levelTimer=0; // Temeljna brzina kretanja ekrana i timer koji povecava level po potrebi (svako 30 sekundi)
     private ArrayList<Platform> platforms;
     private int noOfPlatforms = 6; // Koliko platformi će biti na ekranu u isto vrijeme
-    private float screenStart = 200, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
+    private float screenStart = 100, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
     private float maxPlatformWidth = 400;
     //podaci za sat
     public int sek;
     int cx, cy, prvi_prolazak=0;
     float secondsRadius,clockDiameter ;
+    String comboWord;
+    int comboWordFrameCount;
 
     Screen()
     {
@@ -331,17 +355,6 @@ class Screen {
             pl.draw();
         }
 
-/*
-        // TImer za levele
-        fill(255);
-        rect(5, 345, screenStart - 10, 20);
-        fill(0);
-        rect(10, 350, screenStart - 20, 10);
-        fill(125);
-
-        float timerMappedValue = map(levelTimer, 0, 1800, 0, screenStart - 20);
-        rect(10 + screenStart - 20 - timerMappedValue, 350, timerMappedValue, 10);
-        */
         if(level==0)
         crtaj_sat(0);
         else
@@ -357,6 +370,30 @@ class Screen {
             levelTimer = 0;
         }
 
+        // Crtamo rijeci koje se pojave na kraju comboa
+        drawComboWords();
+
+    }
+
+    void drawComboWords()
+    {
+        if(comboWordFrameCount > 0)
+        {
+            textAlign(CENTER);
+            textFont(font);
+            fill(color(var, 255, 255));
+            var++;
+            if (var>255)var=0;
+            textSize(60);
+            text(comboWord, height/2, width/2);
+            comboWordFrameCount--;
+        }
+    }
+
+    void napisi(String s)
+    {
+        comboWord = s;
+        comboWordFrameCount = 60;
     }
 
     void crtaj_sat(int lvl)
@@ -386,7 +423,6 @@ class Screen {
           }
         endShape();
       }
-
       else
       {
         noStroke();
@@ -454,16 +490,7 @@ class Screen {
 
     }
 
-    void napisi(String s)
-    {
-      textAlign(CENTER);
-      textFont(font);
-      fill(color(var, 255, 255));
-      var++;
-      if (var>255)var=0;
-      textSize(60);
-      text(s, height/2, width/2);
-    }
+    
 
 
     // Pomakni ekran ovisno o igracevoj poziciji i brzini kretanja
@@ -493,7 +520,7 @@ class Screen {
             pl.draw();
         }
 
-        crtaj_sat(0);
+        crtaj_sat(1);
 
     }
 
@@ -534,7 +561,7 @@ class Character {
 
     private float posx, posy;
     private float vx=0, vy=0;
-    private float ax=.32, ay=.64;
+    private float ax=.32, ay=.9, startingJump = 19;
     private PImage sprite;
     private int run = 0, ledge = 0, standing = 0, rotation = 0;
     private boolean onGround=false, jumpedFromPlatform=false, firstLanding=false, isInCombo=false, newRecord = false;
@@ -736,7 +763,7 @@ class Character {
         //ako smo stisli space i nismo u letu nego smo na površini (kada je onGround true), onda skacemo
         if (spaceKeyPressed && onGround)
         {
-            vy=-14 - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj
+            vy=- startingJump - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj
             onGround=false;
             previousPlatformNumber = currentPlatformNumber;
             startingJumpSpeed = vx; // Potrebno radi odabire sprite-a
@@ -947,14 +974,14 @@ class Character {
     }
 }
 
-int stanje=0, var=0, currentLetter=0;
+int stanje=0, var=0, currentLetter=0, pickedOption=0, currentMenuOptionsCount;
 PFont font;
-PImage bg;
+PImage bg, cursorHarold;
 Screen mainScreen;
 Character player;
-boolean leftKeyPressed = false, rightKeyPressed = false, spaceKeyPressed = false;
+boolean leftKeyPressed = false, rightKeyPressed = false, downKeyPressed = false, upKeyPressed = false, spaceKeyPressed = false;
 boolean usernameEntered = false;
-String pickedCharacter;
+String pickedCharacter = "Harold";
 Leaderboards boards;
 char[] username = new char[] {'A', 'A', 'A'};
 
@@ -969,9 +996,12 @@ void setup()
 {
     size(1100, 900);
     //font=createFont("ComicSansMS-BoldItalic-48.vlw", 32);
-    font = createFont("Georgia", 32);
+    font = createFont("Georgia Bold", 32);
     colorMode(HSB);
     noStroke();
+
+    cursorHarold = loadImage("cursorHarold.png");
+    cursorHarold.resize(40, 0);
 
     boards = new Leaderboards();
     minim= new Minim(this);
@@ -1016,21 +1046,30 @@ void draw()
 
 void startScreen()
 {
+    currentMenuOptionsCount = 3;
+
     bg=loadImage("background1.jpg");
     bg.resize(width, height);
     background(bg);
-    textAlign(CENTER);
-    textSize(70);
+
+    textAlign(LEFT);
     textFont(font);
     fill(color(var, 255, 255));
     var++;
     if (var>255)var=0;
-    text("Press H to play with Harold \n Press D to play with Disco Dave", 1*width/4, 4*height/5);
+    text("Play", 70, 1*height/7);
+    text("Character: <- " + pickedCharacter + " ->", 70, 2*height/7);
+    text("Exit ", 70, 3*height/7);
+
+    image(cursorHarold, 25, (pickedOption+1)*height/7 - 2*cursorHarold.height/3);
+
+    textAlign(CENTER);
     textSize(160);
     rotate(PI/6);
-    text("ICY", 3*width/4, -height/5);
-    text("TOWER", 3*width/4, -height/5+160);
+    text("ICY", 4*width/5, -height/5);
+    text("TOWER", 4*width/5, -height/5+160);
     rotate(-PI/6);
+
     theme.play();
     if ( theme.position() == theme.length() )
     {
@@ -1039,12 +1078,18 @@ void startScreen()
     }
     boards.drawOnStartScreen();
 
-    if (keyPressed && stanje==0 && (key == 'd' || key == 'h' || key == 'D' || key == 'H'))
+    if ( keyPressed && key == ENTER && (pickedOption == 0 || pickedOption == currentMenuOptionsCount - 1) )
     {
-        pickedCharacter = (key == 'd' || key == 'D') ? "dave" : "harold";
+        if(pickedOption == currentMenuOptionsCount - 1) // Exit ce uvijek biti zadnja
+        {
+            myExit();
+        }
+
+        pickedCharacter = (pickedCharacter == "Dave") ? "dave" : "harold";
         mainScreen = new Screen();
         player = new Character(mainScreen, pickedCharacter, boards);
-        stanje=1;
+        stanje = 1;
+        pickedOption = 0; // Resetiramo ga na nulu
     }
 }
 
@@ -1071,7 +1116,8 @@ void gameScreen()
 
 void endScreen()
 {
-    background(0);
+    background(#800040);
+
     textAlign(CENTER);
     textFont(font);
     fill(color(var, 255, 255));
@@ -1080,11 +1126,21 @@ void endScreen()
     textSize(220);
     text("GAME", height/2, width/3);
     text("OVER", height/2, width/3 + 220);
-    textSize(20);
-    text("Press 'R' to restart.", width/2, height/3+440);
+
+    currentMenuOptionsCount = 3;
+
+    textAlign(LEFT);
+    textSize(50);
+    text("Play again", 70, height/3+440);
+    text("Main menu", 70, height/3+490);
+    text("Exit", 70, height/3+540);
+    textAlign(CENTER);
+
+    image(cursorHarold, 25, (pickedOption)*50 + height/3+440 - cursorHarold.height/2);
 
     in_game.close();
     jo.close();
+
 
     // Provjerava ako ima rekord i onda otvara prozor za upis usernamea
     if(player.isThereANewRecord() && !usernameEntered)
@@ -1098,21 +1154,38 @@ void endScreen()
 
         fill(255);
         textSize(40);
-        text("NEW RECORD\nWrite your name:\n" + String.valueOf(us) + "\nPress ENTER on end", width/2, 2*height/7);
+        text("NEW RECORD\nWrite your name:\n" + String.valueOf(us) + "\nPress '+' on end", width/2, 2*height/7);
 
-        if (keyPressed && key == ENTER)
+        if (stanje == 2 && !usernameEntered && key == '+') // + je ovdje privremeno dok ne nadjem opciju kako da mi ne racuna ENTER vise puta
         {
             usernameEntered = true;
             boards.addNewRecord(String.valueOf(username));
         }
+        
+        pickedOption = 0; // Osiguravamo da se cursor ne mice dok je otvoren prozor za combo
     }
 
-    if (usernameEntered && keyPressed && (key == 'r' || key == 'R'))
+    if ((!player.isThereANewRecord() || usernameEntered) && keyPressed && key == ENTER)
     {
+        if(pickedOption == currentMenuOptionsCount - 1) // Exit ce uvijek biti zadnja
+        {
+            myExit();
+        }
+
+        if(pickedOption == 1)
+        {
+            stanje = 0;
+            pickedOption = 0;
+            return;
+        }
+
         reset();
         usernameEntered = false;
         novi_high_score.close();
+        pickedOption = 0;
+        
     }
+
 }
 
 void pauseScreen()
@@ -1121,15 +1194,18 @@ void pauseScreen()
     mainScreen.pauseScreen();
     player.pauseScreen();
 
-    fill(0);
-    rect(150, 150, 600, 600);
+    fill(0, 80);
+    rect(0, 0, width, height);
+
 
     fill(255);
-    textSize(20);
-    textAlign(LEFT);
-    text("Press 'R' to reset.", 170, 200);
-    text("Press 'M' to go to main menu.", 170, 300);
-    textAlign(CENTER);
+    textSize(150);
+    text("PAUSED", width/2, 200);
+
+    textSize(60);
+    text("Press 'R' to reset.", width/2, 400);
+    text("Press 'M' to go to main menu.", width/2, 500);
+    text("Press 'P' to continue.", width/2, 600);
 
     if (keyPressed && (key == 'r' || key == 'R'))
     {
@@ -1139,6 +1215,12 @@ void pauseScreen()
         stanje = 0;
     }
 
+}
+
+void myExit()
+{
+    boards.saveToFile();
+    exit();
 }
 
 void reset() {
@@ -1155,6 +1237,7 @@ void reset() {
 // izvršavati provjeru
 
 void keyPressed() {
+    char c = key;
     if (key==CODED)
     {
         if (keyCode==LEFT)
@@ -1165,17 +1248,37 @@ void keyPressed() {
         {
             rightKeyPressed = true;
         }
+
+        if(stanje == 1 || stanje == 3) return; // U stanjima 1 i 3 nema menija
+
+        // Pomicanje odabira u meni-u
+        if(keyCode==UP)
+        {
+            pickedOption = (pickedOption == 0) ? 2 : (pickedOption - 1) % currentMenuOptionsCount;
+        }
+        if(keyCode==DOWN)
+        {
+            pickedOption = (pickedOption + 1) % currentMenuOptionsCount;
+        }
+
+        // Mijenja odabir lika
+        if(stanje == 0 && (keyCode==LEFT || keyCode==RIGHT) && pickedOption == 1)
+        {
+            pickedCharacter = (pickedCharacter == "Harold") ? "Dave" : "Harold";
+        }
+
+        
     } else if (key == ' ')
     {
         spaceKeyPressed = true;
     } else if ((key == 'p' || key == 'P') && (stanje == 1 || stanje == 3)) // Pause screen on/off
     {
         stanje = (stanje == 1) ? 3 : 1;
-    } else if (stanje == 2 &&  !usernameEntered && key!=ENTER) // Ako je rekord onda upis slova za username
+    } else if (stanje == 2 && !usernameEntered && key!=ENTER) // Ako je rekord onda upis slova za username
     {
         username[currentLetter] = key;
         currentLetter = (currentLetter+1)%3;
-    }
+    } 
 }
 
 void keyReleased() {

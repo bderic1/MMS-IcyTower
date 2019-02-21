@@ -196,7 +196,7 @@ class Leaderboards {
             text(el.get("floor"), floorX + 40, tempY);
             text(el.get("combo"), floorX + 100, tempY);
             text(el.get("player"), floorX+ 160, tempY);
-            tempY += 30;        
+            tempY += 30;
             }
 
         textAlign(CENTER);
@@ -302,10 +302,10 @@ class Screen {
 
         //postavke sata
 
-        int clock_radius = 50;
+        int clock_radius = 47;
         secondsRadius = clock_radius * 0.72;
         clockDiameter = clock_radius * 1.8;
-        cx = 70;
+        cx = 51;
         cy = 370;
     }
 
@@ -356,9 +356,9 @@ class Screen {
         }
 
         if(level==0)
-        crtaj_sat(0);
+        crtaj_sat(0,0);
         else
-        crtaj_sat(1);
+        crtaj_sat(1,levelTimer);
 
         // Provjera timera i levela
         if(level == 0) return; // Ako jos nije pocelo onda ne radi nista
@@ -396,8 +396,9 @@ class Screen {
         comboWordFrameCount = 60;
     }
 
-    void crtaj_sat(int lvl)
+    void crtaj_sat(int lvl, int timer)
     {
+      float s = map(timer/30, 0, 60, 0, TWO_PI)-HALF_PI;
 
       if(lvl==0)
       {
@@ -412,7 +413,7 @@ class Screen {
         // Draw the hands of the clock
         stroke(255,0,0);
         strokeWeight(7);
-        line(cx, cy, cx , cy - HALF_PI *secondsRadius);
+        line(cx, cy, cx + cos(s) * secondsRadius, cy + sin(s) * secondsRadius);
         strokeWeight(2);
         beginShape(POINTS);
         for (int a = 0; a < 360; a+=30) {
@@ -434,7 +435,7 @@ class Screen {
         fill(255);
         ellipse(cx, cy, clockDiameter, clockDiameter);
 
-        float s = map((second()-sek)*2, 0, 60, 0, TWO_PI)-HALF_PI;
+        s = map(timer/30, 0, 60, 0, TWO_PI)-HALF_PI;
 
         if((s+HALF_PI)%TWO_PI>=0 && (s+HALF_PI)%TWO_PI<0.4 && prvi_prolazak>1)
         {
@@ -483,13 +484,12 @@ class Screen {
       hurry_up.play();
       if ( hurry_up.position() == hurry_up.length() )
       {
-        hurry_up.close();
-        hurry_up=minim.loadFile("hurry_up.wav");
+        hurry_up.rewind();
       }
 
     }
 
-    
+
 
 
     // Pomakni ekran ovisno o igracevoj poziciji i brzini kretanja
@@ -519,7 +519,7 @@ class Screen {
             pl.draw();
         }
 
-        crtaj_sat(1);
+        crtaj_sat(0, levelTimer);
 
     }
 
@@ -637,8 +637,10 @@ class Character {
                     ledge = (ledge+1)%20; // Mijenjamo sprite za rub svako 10 frameova
                     image = ((isPlayerOnLedge == -1) ? "left" : "right") + image;
                     sprite = sprites.get(image);
+                    ledgeaudio.play();
                 } else
                 {
+                    ledgeaudio.rewind();
                     sprite = sprites.get("standing-"+str(standing/20));
                     standing = (standing+1)%60; // Mijenjamo sprite za stajanje svako 20 frameova
                 }
@@ -758,12 +760,38 @@ class Character {
 
         // Provjeravamo combo ovdje u slucaju da igrac odma odskoci od platforme pa cemo zabiljeziti tu platformu
         checkForCombo();
-
         //ako smo stisli space i nismo u letu nego smo na površini (kada je onGround true), onda skacemo
         if (spaceKeyPressed && onGround)
         {
             vy=- startingJump - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj
             onGround=false;
+
+            //zvuk skoka ovisi o broju preskočenih platformi
+            if(currentPlatformNumber==previousPlatformNumber+1)//preskočena jedna platforma
+            {
+              skok_jedna.play();
+              if ( skok_jedna.position() == skok_jedna.length() )
+              {
+                skok_jedna.rewind();
+              }
+            }
+            else if(currentPlatformNumber==previousPlatformNumber+2)//preskoceno dvije platforme
+            {
+              skok_nekoliko.play();
+              if ( skok_nekoliko.position() == skok_nekoliko.length() )
+              {
+                skok_nekoliko.rewind();
+              }
+            }
+            else if(currentPlatformNumber>previousPlatformNumber+2)//preskoceno više platformi
+            {
+              skok_vise.play();
+              if ( skok_vise.position() == skok_vise.length() )
+              {
+                skok_vise.rewind();
+              }
+            }
+
             previousPlatformNumber = currentPlatformNumber;
             startingJumpSpeed = vx; // Potrebno radi odabire sprite-a
             jumpedFromPlatform = true; // Oznacavamo da je skocio sa platforme a ne pao
@@ -821,9 +849,14 @@ class Character {
         //ako lik dođe ispod visine, gotovi smo
         if (posy>=height-sprite.height/2)
         {
+          //zvuk za game over
+          game_ending.play();
+          if ( game_ending.position() == game_ending.length() )
+            {
+            game_ending.rewind();
+            }
             newRecord = lboards.checkForHighScore(highestCombo, currentPlatformNumber);
             stanje=2;
-            novi_high_score=minim.loadFile("novi_high_score.wav");
         }
 
 
@@ -911,61 +944,91 @@ class Character {
       if(4<=combo && combo<=6)
       {
         good.play();
-        good=minim.loadFile("good.wav");
+        if ( good.position() == good.length() )
+        {
+          good.rewind();
+        }
         mainScreen.napisi("Good!");
       }
       else if(7<=combo && combo<=14)
       {
         sweet.play();
-        sweet=minim.loadFile("sweet.wav");
-        mainScreen.napisi("Sweet!");
+        if ( sweet.position() == sweet.length() )
+          {
+          sweet.rewind();
+          }
+         mainScreen.napisi("Sweet!");
       }
       else if(15<=combo && combo<=24)
       {
         great.play();
-        great=minim.loadFile("great.wav");
+        if ( great.position() == great.length() )
+          {
+          great.rewind();
+          }
         mainScreen.napisi("Great!");
       }
       else if(25<=combo && combo<=34)
       {
         superb.play();
-        superb=minim.loadFile("super.wav");
+        if ( superb.position() == superb.length() )
+          {
+          superb.rewind();
+          }
         mainScreen.napisi("Super!");
       }
       else if(35<=combo && combo<=49)
       {
         wow.play();
-        wow=minim.loadFile("wow.wav");
+        if ( wow.position() == wow.length() )
+          {
+          wow.rewind();
+          }
         mainScreen.napisi("WOW!");
       }
       else if(50<=combo && combo<=69)
       {
         amazing.play();
-        amazing=minim.loadFile("amazing.wav");
-        mainScreen.napisi("Amazing!");
+        if ( amazing.position() == amazing.length() )
+          {
+          amazing.rewind();
+          }
+       mainScreen.napisi("Amazing!");
       }
       else if(70<=combo && combo<=99)
       {
         extreme.play();
-        extreme=minim.loadFile("extreme.wav");
+        if ( extreme.position() == extreme.length() )
+          {
+          extreme.rewind();
+          }
         mainScreen.napisi("Extreme!");
       }
       else if(100<=combo && combo<=139)
       {
         fantastic.play();
-        fantastic=minim.loadFile("fantastic.wav");
+        if ( fantastic.position() == fantastic.length() )
+          {
+          fantastic.rewind();
+          }
         mainScreen.napisi("Fantastic!");
       }
       else if(140<=combo && combo<=199)
       {
         splendid.play();
-        splendid=minim.loadFile("splendid_sala.wav");
+        if ( splendid.position() == splendid.length() )
+          {
+          splendid.rewind();
+          }
         mainScreen.napisi("Splendid!");
       }
       else if(combo>=199)
       {
         no_way.play();
-        no_way=minim.loadFile("no_way.wav");
+        if ( no_way.position() == no_way.length() )
+          {
+          no_way.rewind();
+          }
         mainScreen.napisi("NO WAY!");
       }
 
@@ -988,7 +1051,7 @@ Minim minim;
 //popis mogućih sound datoteka
 AudioPlayer amazing, extreme, fantastic, good, great, hurry_up, jo, no_way;
 AudioPlayer novi_high_score, game_ending, power, skok_jedna, skok_vise, skok_nekoliko;
-AudioPlayer in_game, splendid, superb, sweet, theme, try_again, wow ;
+AudioPlayer in_game, splendid, superb, sweet, theme, try_again, wow, ledgeaudio ;
 
 
 void setup()
@@ -1027,6 +1090,7 @@ void setup()
     theme=minim.loadFile("theme.mp3"); //ova ide na početni ekran, postavljeno
     try_again=minim.loadFile("try_again.wav");
     wow=minim.loadFile("wow.wav");
+    ledgeaudio=minim.loadFile("ledge.wav");
 
 }
 
@@ -1145,6 +1209,9 @@ void endScreen()
     if(player.isThereANewRecord() && !usernameEntered)
     {
         novi_high_score.play();
+        if(novi_high_score.position()==novi_high_score.length())
+          novi_high_score.rewind();
+
         fill(125);
         rect(width/7, height/7, 5*width/7, 5*height/7);
 
@@ -1160,7 +1227,7 @@ void endScreen()
             usernameEntered = true;
             boards.addNewRecord(String.valueOf(username));
         }
-        
+
         pickedOption = 0; // Osiguravamo da se cursor ne mice dok je otvoren prozor za combo
     }
 
@@ -1174,15 +1241,13 @@ void endScreen()
         if(pickedOption == 1)
         {
             stanje = 0;
-            pickedOption = 0;
             return;
         }
 
         reset();
         usernameEntered = false;
-        novi_high_score.close();
         pickedOption = 0;
-        
+
     }
 
 }
@@ -1266,7 +1331,7 @@ void keyPressed() {
             pickedCharacter = (pickedCharacter == "Harold") ? "Dave" : "Harold";
         }
 
-        
+
     } else if (key == ' ')
     {
         spaceKeyPressed = true;
@@ -1277,7 +1342,7 @@ void keyPressed() {
     {
         username[currentLetter] = key;
         currentLetter = (currentLetter+1)%3;
-    } 
+    }
 }
 
 void keyReleased() {

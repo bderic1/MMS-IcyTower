@@ -258,9 +258,16 @@ class Platform {
 
     void draw()
     {
-
         // Crtaj platfomu
-        fill(#770077);
+
+        if(platformNumber<100)
+          fill(#6666ff);
+        else if(platformNumber<200)
+          fill(#ff9933);
+        else if(platformNumber<300)
+          fill(#cc33ff);
+        else
+          fill(#008000);
         rect(x, y, w, h);
 
         // Na svaku desetu napisi broj platforme
@@ -694,7 +701,6 @@ class Character {
 
         drawCombo();
 
-
     }
 
     void drawCombo()
@@ -859,7 +865,6 @@ class Character {
             stanje=2;
         }
 
-
         //ako harold dođe do vrha, ne može ići više od toga (ostalo -10 jer u originalu on udje malo u strop al vuce ekran za sobom pa nema problema i izgleda prirodno)
         if (posy <= -10)
             posy=-10;
@@ -993,7 +998,7 @@ class Character {
           {
           amazing.rewind();
           }
-       mainScreen.napisi("Amazing!");
+       mainScreen.napisi("AMAZING!");
       }
       else if(70<=combo && combo<=99)
       {
@@ -1002,7 +1007,7 @@ class Character {
           {
           extreme.rewind();
           }
-        mainScreen.napisi("Extreme!");
+        mainScreen.napisi("EXTREME!");
       }
       else if(100<=combo && combo<=139)
       {
@@ -1011,7 +1016,7 @@ class Character {
           {
           fantastic.rewind();
           }
-        mainScreen.napisi("Fantastic!");
+        mainScreen.napisi("FANTASTIC!");
       }
       else if(140<=combo && combo<=199)
       {
@@ -1020,7 +1025,7 @@ class Character {
           {
           splendid.rewind();
           }
-        mainScreen.napisi("Splendid!");
+        mainScreen.napisi("SPLENDID!");
       }
       else if(combo>=199)
       {

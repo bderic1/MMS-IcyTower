@@ -1138,6 +1138,13 @@ void startScreen()
     text("TOWER", 4*width/5, -height/5+160);
     rotate(-PI/6);
 
+    //ako smo na startScreen dosli iz pauze>ponovni odabir main menua, moramo zaustaviti in game pjesmu i pustiti theme
+    if(in_game.isPlaying())
+      {
+        in_game.pause();
+         theme=minim.loadFile("theme.mp3");
+     }
+      //puštamo theme beskonačno puta
     theme.play();
     if ( theme.position() == theme.length() )
     {
@@ -1294,8 +1301,6 @@ void myExit()
 
 void reset() {
     mainScreen = new Screen();
-    //moraju se "restartati" za novo korištnenje, ne znam zašto, malo je bezveze.
-    in_game=minim.loadFile("in_game.mp3");
     jo=minim.loadFile("jo.wav");
 
     player = new Character(mainScreen, pickedCharacter, boards);

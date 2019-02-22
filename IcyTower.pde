@@ -1046,7 +1046,7 @@ PFont font;
 PImage bg, cursorHarold;
 Screen mainScreen;
 Character player;
-boolean leftKeyPressed = false, rightKeyPressed = false, downKeyPressed = false, upKeyPressed = false, spaceKeyPressed = false;
+boolean leftKeyPressed = false, rightKeyPressed = false, downKeyPressed = false, upKeyPressed = false, spaceKeyPressed = false, enterReleased=false;
 boolean usernameEntered = false;
 String pickedCharacter = "Harold";
 Leaderboards boards;
@@ -1126,6 +1126,8 @@ void startScreen()
     var++;
     if (var>255)var=0;
     text("Play", 70, 1*height/7);
+    if(pickedCharacter=="dave")pickedCharacter="Dave";
+    if(pickedCharacter=="harold")pickedCharacter="Harold"; 
     text("Character: <- " + pickedCharacter + " ->", 70, 2*height/7);
     text("Exit ", 70, 3*height/7);
 
@@ -1142,7 +1144,6 @@ void startScreen()
     if(in_game.isPlaying())
       {
         in_game.pause();
-         theme=minim.loadFile("theme.mp3");
      }
       //puštamo theme beskonačno puta
     theme.play();
@@ -1153,8 +1154,9 @@ void startScreen()
     }
     boards.drawOnStartScreen();
 
-    if ( keyPressed && key == ENTER && (pickedOption == 0 || pickedOption == currentMenuOptionsCount - 1) )
+    if ( keyPressed && key == ENTER && enterReleased && (pickedOption == 0 || pickedOption == currentMenuOptionsCount - 1) )
     {
+      enterReleased=false;
         if(pickedOption == currentMenuOptionsCount - 1) // Exit ce uvijek biti zadnja
         {
             myExit();
@@ -1178,7 +1180,7 @@ void gameScreen()
 
     mainScreen.moveScreen(player.positionY(), player.verticalSpeed());
 
-    theme.close();
+    theme.pause();
     in_game.play();
     jo.play();
     if ( in_game.position() == in_game.length() )  //ako dođem do kraja, želim ponoviti pjesmu
@@ -1213,7 +1215,7 @@ void endScreen()
 
     image(cursorHarold, 25, (pickedOption)*50 + height/3+440 - cursorHarold.height/2);
 
-    in_game.close();
+    in_game.pause();
     jo.close();
 
 
@@ -1232,10 +1234,11 @@ void endScreen()
 
         fill(255);
         textSize(40);
-        text("NEW RECORD\nWrite your name:\n" + String.valueOf(us) + "\nPress '+' on end", width/2, 2*height/7);
+        text("NEW RECORD\nWrite your name:\n" + String.valueOf(us), width/2, 2*height/7);
 
-        if (stanje == 2 && !usernameEntered && key == '+') // + je ovdje privremeno dok ne nadjem opciju kako da mi ne racuna ENTER vise puta
+        if (stanje == 2 && !usernameEntered && keyPressed && key == ENTER && enterReleased)
         {
+            enterReleased=false;
             usernameEntered = true;
             boards.addNewRecord(String.valueOf(username));
         }
@@ -1243,8 +1246,9 @@ void endScreen()
         pickedOption = 0; // Osiguravamo da se cursor ne mice dok je otvoren prozor za combo
     }
 
-    if ((!player.isThereANewRecord() || usernameEntered) && keyPressed && key == ENTER)
+    if ((!player.isThereANewRecord() || usernameEntered) && keyPressed && key == ENTER && enterReleased)
     {
+        enterReleased=false;
         if(pickedOption == currentMenuOptionsCount - 1) // Exit ce uvijek biti zadnja
         {
             myExit();
@@ -1253,6 +1257,7 @@ void endScreen()
         if(pickedOption == 1)
         {
             stanje = 0;
+            pickedOption=0;
             return;
         }
 
@@ -1369,5 +1374,9 @@ void keyReleased() {
     } else if (key == ' ')
     {
         spaceKeyPressed = false;
+    }
+    else if(key==ENTER)
+    {
+      enterReleased=true;
     }
 }

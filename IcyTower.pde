@@ -1127,7 +1127,7 @@ void startScreen()
     if (var>255)var=0;
     text("Play", 70, 1*height/7);
     if(pickedCharacter=="dave")pickedCharacter="Dave";
-    if(pickedCharacter=="harold")pickedCharacter="Harold"; 
+    if(pickedCharacter=="harold")pickedCharacter="Harold";
     text("Character: <- " + pickedCharacter + " ->", 70, 2*height/7);
     text("Exit ", 70, 3*height/7);
 
@@ -1224,8 +1224,9 @@ void endScreen()
     {
         novi_high_score.play();
         if(novi_high_score.position()==novi_high_score.length())
-          novi_high_score.rewind();
-
+        {
+          novi_high_score.pause();
+        }
         fill(125);
         rect(width/7, height/7, 5*width/7, 5*height/7);
 
@@ -1248,6 +1249,8 @@ void endScreen()
 
     if ((!player.isThereANewRecord() || usernameEntered) && keyPressed && key == ENTER && enterReleased)
     {
+        novi_high_score.rewind();
+
         enterReleased=false;
         if(pickedOption == currentMenuOptionsCount - 1) // Exit ce uvijek biti zadnja
         {

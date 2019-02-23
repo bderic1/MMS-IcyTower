@@ -259,17 +259,42 @@ class Platform {
     void draw()
     {
         // Crtaj platfomu
-
         if(platformNumber<100)
+        {
           fill(#6666ff);
-        else if(platformNumber<200)
-          fill(#ff9933);
-        else if(platformNumber<300)
-          fill(#cc33ff);
-        else
-          fill(#008000);
-        rect(x, y, w, h);
+          rect(x, y, w, h);
+        }
+        else if(platformNumber<200)//snijeznja platforma
+        {
+          int ost=(int)w%20;
+          if(ost!=0)
+          {
+            w+=20;
+            w-=ost;
+          }
 
+          fill(255);
+          rect(x,y,w,5);
+          fill(#6666ff);
+          rect(x, y+5, w, 35);
+          fill(255);
+          for(int i=0; i<(w/20)-1; i++)
+          {
+            arc(x+3+i*20, y+5, 10, 24, 0, PI);
+            arc(x+13+i*20, y+5, 10, 12, 0, PI);
+          }
+        }
+
+        else if(platformNumber<300)
+        {
+          fill(#cc33ff);
+          rect(x, y, w, h);
+        }
+        else
+        {
+          fill(#008000);
+          rect(x, y, w, h);
+        }
         // Na svaku desetu napisi broj platforme
         if (platformNumber % 10 == 0)
         {
@@ -296,7 +321,6 @@ class Screen {
     private float screenStart = 100, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
     private float maxPlatformWidth = 400;
     //podaci za sat
-    public int sek;
     int cx, cy, prvi_prolazak=0;
     float secondsRadius,clockDiameter ;
     String comboWord;
@@ -550,7 +574,6 @@ class Screen {
         level = v;
         if(v==1&&prvi_prolazak==0)
         {
-          sek=second();
           prvi_prolazak=1;
         }
       }

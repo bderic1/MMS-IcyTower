@@ -9,21 +9,6 @@ import java.util.Map;
 import java.lang.*;
 import ddf.minim.*;
 
-
-// FIXME: Postoji bug s brojanjem platformi, može se doći do 10.platforme bez da on registrira da sam prešla 4.platfomu ako ne skačeš jednu po jednu.
-//
-// TODO: TImeri su trenutacno ovisni o framerateu. Ja mislim da je to bolje nego realtime jer ako netko ima manji framerate odmah mu je i sporija igra
-//       jer je sve ovisno o framerateu.
-//       Mozemo implementirati da se ne pomice ovisno o framerateu. Tipa ako se lik pomice 60 pixela na 60 frameova da se pomice i 60 u 30 frameova tj
-//       1 px po frameu u 60 ili 2 px po frameu ako je 30 fps. (Mozda dovoljno sve kretnje mnozit sa 60/frameRate ?)
-//       Al posto bi to moglo dovest do malo previse bugova onda mozda bolje ovako jer ipak je ne plasiramo na trziste
-
-// TODO: Asseti
-
-// FIXME: Naci način da supressam ENTER tipku jer kad odem u main menu iz zadnjeg ekrana ono odma skoči u igru i isto tako kad se upisuje username
-
-
-
 // Ljestvice najboljih rezultata
 // Format je "placement floor combo player"
 class Leaderboards {
@@ -290,7 +275,7 @@ class Platform {
         else
         {
           fill(#008000);
-          rect(x, y, w, h);
+        rect(x, y, w, h);
         }
         // Na svaku desetu napisi broj platforme
         if (platformNumber % 10 == 0)
@@ -592,7 +577,7 @@ class Character {
 
     private float posx, posy;
     private float vx=0, vy=0;
-    private float ax=.32, ay=1, startingJump = 19;
+    private float ax=.32, ay=.95, startingJump = 19;
     private PImage sprite;
     private int run = 0, ledge = 0, standing = 0, rotation = 0;
     private boolean onGround=false, jumpedFromPlatform=false, firstLanding=false, isInCombo=false, newRecord = false;
@@ -1193,7 +1178,7 @@ void startScreen()
             myExit();
         }
 
-        if( pickedOption == 2 ) // Instructions TODO:
+        if( pickedOption == 2 )
         {
             instructionsImage = loadImage("instructions.png");
             instructionsImage.resize(width, height);

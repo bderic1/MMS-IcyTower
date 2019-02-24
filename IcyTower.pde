@@ -10,9 +10,6 @@ import java.lang.*;
 import ddf.minim.*;
 
 
-// FIXME: Ima bug koji ponekad pri skakanju blizu vrha dovodi do toga da lik zna proci kroz platforme.
-//        Cini mi se da se to sada desava samo kada je combo sprite
-//        Mozda popravljeno?
 // FIXME: Postoji bug s brojanjem platformi, može se doći do 10.platforme bez da on registrira da sam prešla 4.platfomu ako ne skačeš jednu po jednu.
 //
 // TODO: TImeri su trenutacno ovisni o framerateu. Ja mislim da je to bolje nego realtime jer ako netko ima manji framerate odmah mu je i sporija igra
@@ -293,7 +290,7 @@ class Screen {
     private int level, levelTimer=0; // Temeljna brzina kretanja ekrana i timer koji povecava level po potrebi (svako 30 sekundi)
     private ArrayList<Platform> platforms;
     private int noOfPlatforms = 6; // Koliko platformi će biti na ekranu u isto vrijeme
-    private float screenStart = 100, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
+    private float screenStart = 150, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
     private float maxPlatformWidth = 400;
     //podaci za sat
     public int sek;
@@ -545,6 +542,11 @@ class Screen {
         return speed;
     }
 
+    int getLevel()
+    {
+        return level;
+    }
+
     void setLevel(int v)
     {
         level = v;
@@ -553,7 +555,7 @@ class Screen {
           sek=second();
           prvi_prolazak=1;
         }
-      }
+    }
 
     ArrayList<Platform> getPlatforms()
     {
@@ -567,7 +569,7 @@ class Character {
 
     private float posx, posy;
     private float vx=0, vy=0;
-    private float ax=.32, ay=.9, startingJump = 19;
+    private float ax=.32, ay=1, startingJump = 19;
     private PImage sprite;
     private int run = 0, ledge = 0, standing = 0, rotation = 0;
     private boolean onGround=false, jumpedFromPlatform=false, firstLanding=false, isInCombo=false, newRecord = false;
@@ -802,7 +804,7 @@ class Character {
             startingJumpSpeed = vx; // Potrebno radi odabire sprite-a
             jumpedFromPlatform = true; // Oznacavamo da je skocio sa platforme a ne pao
 
-            if (currentPlatformIndex >= 4) // Ako prijedjemo cetvrtu platformu onda se ekran pocinje kretati i pali se timer
+            if (currentPlatformIndex >= 4 && screen.getLevel() == 0 ) // Ako prijedjemo cetvrtu platformu onda se ekran pocinje kretati i pali se timer
             {
                 screen.setLevel(1);
             }
@@ -1043,7 +1045,7 @@ class Character {
 
 int stanje=0, var=0, currentLetter=0, pickedOption=0, currentMenuOptionsCount;
 PFont font;
-PImage bg, cursorHarold;
+PImage bg, cursorHarold, instructionsImage;
 Screen mainScreen;
 Character player;
 boolean leftKeyPressed = false, rightKeyPressed = false, downKeyPressed = false, upKeyPressed = false, spaceKeyPressed = false, enterReleased=false;
@@ -1069,6 +1071,7 @@ void setup()
 
     cursorHarold = loadImage("cursorHarold.png");
     cursorHarold.resize(40, 0);
+
 
     boards = new Leaderboards();
     minim= new Minim(this);
@@ -1109,12 +1112,17 @@ void draw()
         endScreen();
     else if (stanje==3)
         pauseScreen();
+    else if (stanje==4)
+        instructionsScreen();
 }
 
 
 void startScreen()
 {
-    currentMenuOptionsCount = 3;
+    currentMenuOptionsCount = 4;
+
+    if(pickedCharacter=="dave")pickedCharacter="Dave";
+    if(pickedCharacter=="harold")pickedCharacter="Harold";
 
     bg=loadImage("background1.jpg");
     bg.resize(width, height);
@@ -1122,19 +1130,19 @@ void startScreen()
 
     textAlign(LEFT);
     textFont(font);
+    textSize(40);
     fill(color(var, 255, 255));
     var++;
     if (var>255)var=0;
-    text("Play", 70, 1*height/7);
-    if(pickedCharacter=="dave")pickedCharacter="Dave";
-    if(pickedCharacter=="harold")pickedCharacter="Harold";
-    text("Character: <- " + pickedCharacter + " ->", 70, 2*height/7);
-    text("Exit ", 70, 3*height/7);
+    text("Play", 70, 1*height/10);
+    text("Character: <- " + pickedCharacter + " ->", 70, 2*height/10);
+    text("Instructions", 70, 3*height/10);
+    text("Exit ", 70, 4*height/10);
 
-    image(cursorHarold, 25, (pickedOption+1)*height/7 - 2*cursorHarold.height/3);
+    image(cursorHarold, 25, (pickedOption+1)*height/10 - 2*cursorHarold.height/3);
 
     textAlign(CENTER);
-    textSize(160);
+    textSize(130);
     rotate(PI/6);
     text("ICY", 4*width/5, -height/5);
     text("TOWER", 4*width/5, -height/5+160);
@@ -1154,12 +1162,21 @@ void startScreen()
     }
     boards.drawOnStartScreen();
 
-    if ( keyPressed && key == ENTER && enterReleased && (pickedOption == 0 || pickedOption == currentMenuOptionsCount - 1) )
+    if ( keyPressed && key == ENTER && enterReleased && (pickedOption == 0 || pickedOption == 2 || pickedOption == currentMenuOptionsCount - 1) )
     {
       enterReleased=false;
         if(pickedOption == currentMenuOptionsCount - 1) // Exit ce uvijek biti zadnja
         {
             myExit();
+        }
+
+        if( pickedOption == 2 ) // Instructions TODO:
+        {
+            instructionsImage = loadImage("instructions.png");
+            instructionsImage.resize(width, height);
+            stanje = 4;
+            return;
+
         }
 
         pickedCharacter = (pickedCharacter == "Dave") ? "dave" : "harold";
@@ -1168,6 +1185,13 @@ void startScreen()
         stanje = 1;
         pickedOption = 0; // Resetiramo ga na nulu
     }
+}
+
+void instructionsScreen()
+{
+    image(instructionsImage, 0, 0);
+    if(keyPressed && (key != ENTER || (key == ENTER && enterReleased))) // Na bilo koji klik vrati se na main menu
+        stanje = 0;
 }
 
 void gameScreen()
@@ -1336,7 +1360,7 @@ void keyPressed() {
         // Pomicanje odabira u meni-u
         if(keyCode==UP)
         {
-            pickedOption = (pickedOption == 0) ? 2 : (pickedOption - 1) % currentMenuOptionsCount;
+            pickedOption = (pickedOption == 0) ? currentMenuOptionsCount - 1 : (pickedOption - 1) % currentMenuOptionsCount;
         }
         if(keyCode==DOWN)
         {

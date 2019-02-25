@@ -1,9 +1,9 @@
 Highest combo
 1 92 62 ZVO
-2 56 31 oov
-3 29 27 stj
-4 134 27 AAA
-5 62 26 =+g
+2 72 47 zvo
+3 62 43 zvo
+4 56 31 oov
+5 19 12 neo
 Highest floor
 1 134 27 AAA
 2 118 14 Bub

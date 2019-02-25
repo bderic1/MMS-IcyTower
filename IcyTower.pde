@@ -1,13 +1,19 @@
 //očekujem 3 stanja koja moramo implementirati
-//stanje==0 će biti početni ekran
-//stanje==1 je igra
-//stanje==2 je game over screen
-//stanje==3 je pause screen
+//stanje=0 će biti početni ekran
+//stanje=1 je igra
+//stanje=2 je game over screen
+//stanje=3 je pause screen
+//stanje=4 su instrukcije
 
 import java.util.Iterator;
 import java.util.Map;
 import java.lang.*;
 import ddf.minim.*;
+
+// FIXME: "rupiduru" zvuk mi ne zavrsava
+// TODO: Vidit sto bi moglo bit uzrog povremenih lagova (Treba vidit mogucnost da je ili crtanje platformi ili rewind zvukova)
+// TODO: Mozda jos malo profinjavanja kontrola
+// TODO: (?) Mozda vidit da se slova bolje vide na neki nacin. Bilo bi lijepo da moze veci spacing al nema toga u processingu. Mozda probati nac neki slican ali ispunjen.
 
 // Ljestvice najboljih rezultata
 // Format je "placement floor combo player"
@@ -242,7 +248,7 @@ class Platform {
         if(platformNumber<100)
         {
           fill(#6666ff);
-          rect(x, y, w, h);
+          rect(x, y, w, h, 8);
         }
         else if(platformNumber<200)//snijeznja platforma
         {
@@ -268,18 +274,18 @@ class Platform {
         else if(platformNumber<300)
         {
           fill(#cc33ff);
-          rect(x, y, w, h);
+          rect(x, y, w, h, 8);
         }
         else
         {
           fill(#008000);
-        rect(x, y, w, h);
+        rect(x, y, w, h, 8);
         }
         // Na svaku desetu napisi broj platforme
         if (platformNumber % 10 == 0)
         {
             fill(0);
-            rect(x + w/2 - 20, y + 2*h/3 - 15, 40, 40);
+            rect(x + w/2 - 20, y + 2*h/3 - 15, 40, 40, 10);
             textFont(createFont("Arial Bold", 17));
             fill(255);
             text(str(platformNumber), x + w/2, y + 2*h/3 + 10);
@@ -727,16 +733,24 @@ class Character {
 
         // Crtamo bar za combo
         fill(#800040);
-        rect(15, 45, 40, 190);
+        rect(15, 35, 40, 210, 10);
         fill(0);
-        rect(25, 50, 20, 180);
+        rect(25, 50, 20, 180, 10);
         fill(#fd4102);
-        rect(25, 50 + 180 - comboTimer, 20, comboTimer);
+        rect(25, 50 + 180 - comboTimer, 20, comboTimer, 8);
+    
+        // Trenutni najveci combo
+        textFont(font);
+        textSize(25);
+        fill(255);
+        text("Best\ncombo:\n" + str(round(highestCombo)), 60, 650);
 
         //TODO: brisati (Framerate)
         textFont(createFont("Arial Bold", 18));
         fill(255);
         text("FPS: " + str(round(frameRate)), 50, 850);
+
+
     }
 
     void horizontalMovement()
@@ -947,6 +961,16 @@ class Character {
         currentPlatformNumber = platformNo;
     }
 
+    int getCurrentPlatformNumber()
+    {
+        return currentPlatformNumber;
+    }
+
+    int getHighestCombo()
+    {
+        return highestCombo;
+    }
+
     boolean isThereANewRecord()
     {
         return newRecord;
@@ -1066,7 +1090,7 @@ Minim minim;
 //popis mogućih sound datoteka
 AudioPlayer amazing, extreme, fantastic, good, great, hurry_up, jo, no_way;
 AudioPlayer novi_high_score, game_ending, power, skok_jedna, skok_vise, skok_nekoliko;
-AudioPlayer in_game, splendid, superb, sweet, theme, try_again, wow, ledgeaudio ;
+AudioPlayer in_game, splendid, superb, sweet, theme, try_again, wow, ledgeaudio, menu_option, menu_select ;
 
 
 void setup()
@@ -1109,7 +1133,8 @@ void setup()
     try_again=minim.loadFile("try_again.wav");
     wow=minim.loadFile("wow.wav");
     ledgeaudio=minim.loadFile("ledge.wav");
-
+    menu_option=minim.loadFile("menu_option.wav");
+    menu_select=minim.loadFile("menu_select.wav");
 
 }
 
@@ -1176,6 +1201,7 @@ void startScreen()
     if ( keyPressed && key == ENTER && enterReleased && (pickedOption == 0 || pickedOption == 2 || pickedOption == currentMenuOptionsCount - 1) )
     {
       enterReleased=false;
+      playSelectSound();
         if(pickedOption == currentMenuOptionsCount - 1) // Exit ce uvijek biti zadnja
         {
             myExit();
@@ -1204,6 +1230,7 @@ void instructionsScreen()
     if(keyPressed && (key != ENTER || (key == ENTER && enterReleased))) // Na bilo koji klik vrati se na main menu
     {
         enterReleased = false;
+        playSelectSound();
         stanje = 0;
     }
         
@@ -1235,27 +1262,39 @@ void gameScreen()
 
 void endScreen()
 {
-    background(#800040);
+    background(100);
+    mainScreen.pauseScreen();
+    player.pauseScreen();
+
+    fill(0, 200);
+    rect(0, 0, width, height);
+
+    fill(#800040);
+    rect(width/6, 2*height/6 - 50, 4*width/6, 3*height/6, 16);
 
     textAlign(CENTER);
     textFont(font);
     fill(color(var, 255, 255));
     var++;
     if (var>255)var=0;
-    textSize(220);
-    text("GAME", height/2, width/3);
-    text("OVER", height/2, width/3 + 220);
+    textSize(150);
+    text("GAME OVER",  width/2, height/4);
 
     currentMenuOptionsCount = 3;
 
     textAlign(LEFT);
     textSize(50);
-    text("Play again", 70, height/3+440);
-    text("Main menu", 70, height/3+490);
-    text("Exit", 70, height/3+540);
-    textAlign(CENTER);
+    text("Play again", width/3, height/3+50);
+    text("Main menu", width/3, height/3+50 + 50);
+    text("Exit", width/3, height/3+50 + 100);
+    
+    image(cursorHarold, width/3 - 45, (pickedOption)*50 + height/3+50 - 2*cursorHarold.height/3 - 10);
 
-    image(cursorHarold, 25, (pickedOption)*50 + height/3+440 - 2*cursorHarold.height/3 - 10);
+    textSize(35);
+    fill(255);
+    text("Best combo: " + str(round(player.getHighestCombo())) + "\nBest floor: " + str(round(player.getCurrentPlatformNumber())), width/6 + 20, 4*height/6);
+
+    textAlign(CENTER);
 
     in_game.pause();
     jo.close();
@@ -1269,8 +1308,8 @@ void endScreen()
         {
           novi_high_score.pause();
         }
-        fill(125);
-        rect(width/7, height/7, 5*width/7, 5*height/7);
+        fill(#400000);
+        rect(width/7, height/7, 5*width/7, 5*height/7, 10);
 
         char[] us = username.clone();
         if((frameCount/10)%2 == 0) us[currentLetter] = '_'; // Da simulira koje slovo se trenutno bira
@@ -1279,9 +1318,14 @@ void endScreen()
         textSize(40);
         text("NEW RECORD\nWrite your name:\n" + String.valueOf(us), width/2, 2*height/7);
 
+        textSize(35);
+        fill(255);
+        text("combo: " + str(round(player.getHighestCombo())) + "\nfloor: " + str(round(player.getCurrentPlatformNumber())), 2*width/7, 4*height/7);
+
         if (stanje == 2 && !usernameEntered && keyPressed && key == ENTER && enterReleased)
         {
             enterReleased=false;
+            playSelectSound();
             usernameEntered = true;
             boards.addNewRecord(String.valueOf(username));
         }
@@ -1294,6 +1338,8 @@ void endScreen()
         novi_high_score.rewind();
 
         enterReleased=false;
+        playSelectSound();
+
         if(pickedOption == currentMenuOptionsCount - 1) // Exit ce uvijek biti zadnja
         {
             myExit();
@@ -1358,6 +1404,15 @@ void reset() {
     stanje = 1;
 }
 
+void playSelectSound()
+{
+    menu_select.play(); 
+    if ( menu_select.position() == menu_select.length() )
+    {
+        menu_select.rewind();
+    }
+}
+
 // Ako su pritisnute tipke za lijevo i desno, one su CODED pa moramo ovako
 // izvršavati provjeru
 
@@ -1390,6 +1445,15 @@ void keyPressed() {
         if(stanje == 0 && (keyCode==LEFT || keyCode==RIGHT) && pickedOption == 1)
         {
             pickedCharacter = (pickedCharacter == "Harold") ? "Dave" : "Harold";
+        }
+
+        if((stanje == 0 || stanje == 2) && (keyCode==UP || keyCode==DOWN || (stanje == 0 && (keyCode==LEFT || keyCode==RIGHT) && pickedOption == 1)) )
+        {
+            menu_option.play(); 
+            if ( menu_option.position() == menu_option.length() )
+            {
+                menu_option.rewind();
+            }
         }
 
 

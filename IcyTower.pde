@@ -249,6 +249,7 @@ class Platform {
         {
           fill(#6666ff);
           rect(x, y, w, h, 8);
+
         }
         else if(platformNumber<200)//snijeznja platforma
         {
@@ -270,16 +271,70 @@ class Platform {
             arc(x+13+i*20, y+5, 10, 12, 0, PI);
           }
         }
+        else if(platformNumber<300)//drvena platforma
+        {
+          stroke(#000000);
+          fill(#993300);
+          rect(x, y, w, 14, 8);
+          stroke(#cc4400);
+          line(x,y+7,x+w,y+7);
+          stroke(#000000);
+          fill(#993300);
+          ellipse(x+w/6, y+20, 14,14);
+          ellipse(x+5*w/6, y+20, 14,14);
 
-        else if(platformNumber<300)
+        }
+        else if(platformNumber<400)//metalna  platforma
+        {
+          stroke(#000000);
+          fill(#007a99);
+          rect(x, y, w, 14, 8);
+          stroke(#00a3cc);
+          line(x,y+7,x+w,y+7);
+          stroke(#008fb3);
+          line(x, y+3, x+w,y+3);
+          line(x, y+11, x+w,y+11);
+          stroke(#000000);
+
+
+        }
+        else if(platformNumber<500)//žvakaća guma
+        {
+          int ost=(int)w%18;
+          if(ost!=0)
+          {
+            w+=18;
+            w-=ost;
+          }
+
+          fill(#e60073);
+          rect(x,y,w,10);
+
+          fill(#e60073);
+          for(int i=0; i<(w/18)-1; i++)
+          {
+            if(i==0)
+            {
+              ellipse(x+8,y+18,6,5);
+            }
+            arc(x+4+i*18, y+6, 9, 24, 0, PI);
+            arc(x+14+i*18, y+6, 9, 12, 0, PI);
+            stroke(#ff1a8c);
+            line(x+3+i*18, y+3, x+6+i*18, y+3);
+            stroke(0);
+
+          }
+        }
+        else if(platformNumber<600)//trokuti
         {
           fill(#cc33ff);
-          rect(x, y, w, h, 8);
+          for(int i=0; i<(w/10)-1; i++)
+          triangle(x+i*10, y, x+i*10+10, y, x+i*10+5, y+10);
         }
         else
         {
           fill(#008000);
-        rect(x, y, w, h, 8);
+          rect(x, y, w, 20, 8);
         }
         // Na svaku desetu napisi broj platforme
         if (platformNumber % 10 == 0)
@@ -375,9 +430,9 @@ class Screen {
         }
 
         if(level==0)
-        crtaj_sat(0,0);
+          crtaj_sat(0,0);
         else
-        crtaj_sat(1,levelTimer);
+          crtaj_sat(1,levelTimer);
 
         // Provjera timera i levela
         if(level == 0) return; // Ako jos nije pocelo onda ne radi nista
@@ -640,7 +695,7 @@ class Character {
             pushMatrix();
             translate(posx, posy);
             rotation = (rotation + 10) % 360;
-            rotate(map(rotation, 0, 360, 0, 2*PI)); 
+            rotate(map(rotation, 0, 360, 0, 2*PI));
             image(sprite,0,0);
             popMatrix();
             sprite.resize(0, 70);
@@ -738,7 +793,7 @@ class Character {
         rect(25, 50, 20, 180, 10);
         fill(#fd4102);
         rect(25, 50 + 180 - comboTimer, 20, comboTimer, 8);
-    
+
         // Trenutni najveci combo
         textFont(font);
         textSize(25);
@@ -1160,7 +1215,7 @@ void startScreen()
     if(pickedCharacter=="dave")pickedCharacter="Dave";
     if(pickedCharacter=="harold")pickedCharacter="Harold";
 
-    
+
     bg.resize(width, height);
     background(bg);
 
@@ -1233,14 +1288,15 @@ void instructionsScreen()
         playSelectSound();
         stanje = 0;
     }
-        
+
 }
 
 void gameScreen()
 {
     imageMode(CENTER);
-
-    background(100);
+    //stavila sam ovu svjetliju, djeluje mi malo veselije
+    background(#75a3a3);
+    //background(100);
 
     mainScreen.draw();
 
@@ -1287,7 +1343,7 @@ void endScreen()
     text("Play again", width/3, height/3+50);
     text("Main menu", width/3, height/3+50 + 50);
     text("Exit", width/3, height/3+50 + 100);
-    
+
     image(cursorHarold, width/3 - 45, (pickedOption)*50 + height/3+50 - 2*cursorHarold.height/3 - 10);
 
     textSize(35);
@@ -1308,7 +1364,7 @@ void endScreen()
         {
           novi_high_score.pause();
         }
-        fill(#400000);
+        fill(#800040);
         rect(width/7, height/7, 5*width/7, 5*height/7, 10);
 
         char[] us = username.clone();
@@ -1406,7 +1462,7 @@ void reset() {
 
 void playSelectSound()
 {
-    menu_select.play(); 
+    menu_select.play();
     if ( menu_select.position() == menu_select.length() )
     {
         menu_select.rewind();
@@ -1449,7 +1505,7 @@ void keyPressed() {
 
         if((stanje == 0 || stanje == 2) && (keyCode==UP || keyCode==DOWN || (stanje == 0 && (keyCode==LEFT || keyCode==RIGHT) && pickedOption == 1)) )
         {
-            menu_option.play(); 
+            menu_option.play();
             if ( menu_option.position() == menu_option.length() )
             {
                 menu_option.rewind();

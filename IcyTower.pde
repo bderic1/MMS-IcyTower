@@ -14,6 +14,7 @@ import ddf.minim.*;
 class Leaderboards {
     ArrayList< HashMap<String, String> > bestCombo = new ArrayList< HashMap<String, String> >(), bestFloor = new ArrayList< HashMap<String, String> >();
     int newCombo, newFloor, indexOfBestCombo, indexOfBestFloor;
+    PFont myFont  = createFont("RoteFlora.ttf", 35), columnsFont = createFont("SansSerif", 15); ;
 
     // Ucitava podatke iz datoteke i sprema u listu tako da pristupamo npr drugom najboljem combu i njegovom imenu sa bestCombo.get(1).get("player")
     Leaderboards()
@@ -140,22 +141,19 @@ class Leaderboards {
     {
         HashMap<String, String> el;
 
-        float textY = 4*height/7, comboX = 2*width/5, floorX = 3*width/5 + 50;
+        float textY = 5*height/7, comboX = 1*width/5, floorX = 3*width/5 + 50;
         float tempY;
 
         textAlign(LEFT);
-        PFont myFont = createFont("SansSerif", 30);
         textFont(myFont);
         fill(255);
         text("Highest combo", comboX, textY);
         text("Highest floor", floorX, textY);
 
-        myFont = createFont("SansSerif", 10);
-        textFont(myFont);
+        textFont(columnsFont);
         text("PLACE  FLOOR          COMBO           DUDE", comboX, textY+30);
         text("PLACE  FLOOR          COMBO           DUDE", floorX, textY+30);
 
-        myFont = createFont("SansSerif", 30);
         textFont(myFont);
         fill(255);
 
@@ -164,10 +162,10 @@ class Leaderboards {
         {
             el = bestCombo.get(i);
             text(str(i+1), comboX, tempY);
-            text(el.get("floor"), comboX + 40, tempY);
-            text(el.get("combo"), comboX + 100, tempY);
-            text(el.get("player"), comboX+ 160, tempY);
-            tempY += 30;
+            text(el.get("floor"), comboX + 60, tempY);
+            text(el.get("combo"), comboX + 160, tempY);
+            text(el.get("player"), comboX+ 250, tempY);
+            tempY += 35;
         }
 
         tempY = textY+70;
@@ -175,10 +173,10 @@ class Leaderboards {
         {
             el = bestFloor.get(i);
             text(str(i+1), floorX, tempY);
-            text(el.get("floor"), floorX + 40, tempY);
-            text(el.get("combo"), floorX + 100, tempY);
-            text(el.get("player"), floorX+ 160, tempY);
-            tempY += 30;
+            text(el.get("floor"), floorX + 60, tempY);
+            text(el.get("combo"), floorX + 160, tempY);
+            text(el.get("player"), floorX+ 250, tempY);
+            tempY += 35;
             }
 
         textAlign(CENTER);
@@ -280,9 +278,11 @@ class Platform {
         // Na svaku desetu napisi broj platforme
         if (platformNumber % 10 == 0)
         {
-            textFont(createFont("Arial Bold", 18));
+            fill(0);
+            rect(x + w/2 - 20, y + 2*h/3 - 15, 40, 40);
+            textFont(createFont("Arial Bold", 17));
             fill(255);
-            text(str(platformNumber), x + w/2, y + 2*h/3);
+            text(str(platformNumber), x + w/2, y + 2*h/3 + 10);
         }
     }
 
@@ -318,8 +318,8 @@ class Screen {
         int clock_radius = 47;
         secondsRadius = clock_radius * 0.72;
         clockDiameter = clock_radius * 1.8;
-        cx = 51;
-        cy = 370;
+        cx = 56;
+        cy = 420;
     }
 
 
@@ -577,7 +577,7 @@ class Character {
 
     private float posx, posy;
     private float vx=0, vy=0;
-    private float ax=.32, ay=.95, startingJump = 19;
+    private float ax=.25, ay=1, startingJump = 19;
     private PImage sprite;
     private int run = 0, ledge = 0, standing = 0, rotation = 0;
     private boolean onGround=false, jumpedFromPlatform=false, firstLanding=false, isInCombo=false, newRecord = false;
@@ -601,7 +601,6 @@ class Character {
 
     void loadSprites()
     {
-        imageMode(CENTER);
         sprites.put("jumping", loadImage(character + "-jumping.png"));
         sprites.put("jumping-right", loadImage(character + "-jumping-right.png"));
         sprites.put("jumping-left", loadImage(character + "-jumping-left.png"));
@@ -629,12 +628,13 @@ class Character {
 
     void setSprite()
     {
-        if(isInCombo && abs(startingJumpSpeed) > 10 && jumpedFromPlatform) // Crta "combo" sprite i rotira ga
+        if(isInCombo && abs(startingJumpSpeed) >= 30 && jumpedFromPlatform) // Crta "combo" sprite i rotira ga
         {
             sprite = sprites.get("combo");
             pushMatrix();
             translate(posx, posy);
-            rotate(rotation/5); rotation++;
+            rotation = (rotation + 10) % 360;
+            rotate(map(rotation, 0, 360, 0, 2*PI)); 
             image(sprite,0,0);
             popMatrix();
             sprite.resize(0, 70);
@@ -718,19 +718,20 @@ class Character {
         // Crtamo counter za combo ako se desava combo
         if(comboCount > 0)
         {
-            textFont(createFont("Arial Bold", 18));
+            textFont(font);
+            textSize(24);
             fill(255);
-            text(str(comboCount) + "\n FLOORS!", 40, 270);
+            text(str(comboCount) + "\n FLOORS!", 50, 270);
         }
 
 
         // Crtamo bar za combo
-        fill(255);
-        rect(15, 45, 20, 190);
+        fill(#800040);
+        rect(15, 45, 40, 190);
         fill(0);
-        rect(20, 50, 10, 180);
-        fill(125);
-        rect(20, 50 + 180 - comboTimer, 10, comboTimer);
+        rect(25, 50, 20, 180);
+        fill(#fd4102);
+        rect(25, 50 + 180 - comboTimer, 20, comboTimer);
 
         //TODO: brisati (Framerate)
         textFont(createFont("Arial Bold", 18));
@@ -743,18 +744,18 @@ class Character {
         // Horizontalne kretnje
         if (leftKeyPressed)
         {
-            vx -= (vx > 0) ? 1.5*ax : ax; // Ako se vec krece desno onda da se malo brze krece prema lijevo pa da brze uspori
+            vx -= (vx > 0) ? 3*ax : ax; // Ako se vec krece desno onda da se malo brze krece prema lijevo pa da brze uspori
         }
         if (rightKeyPressed)
         {
-            vx += (vx < 0) ? 1.5*ax : ax;
+            vx += (vx < 0) ? 3*ax : ax;
         }
         if (onGround && !leftKeyPressed && !rightKeyPressed)
         {
             vx *= 0.9; // Usporavanje ako se ne krece
         }
 
-        vx = constrain(vx, -15, 15);
+        vx = constrain(vx, -20, 20);
         posx += vx;
 
     }
@@ -779,11 +780,11 @@ class Character {
         //ako smo stisli space i nismo u letu nego smo na površini (kada je onGround true), onda skacemo
         if (spaceKeyPressed && onGround)
         {
-            vy=- startingJump - abs(vx);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj
+            vy=- startingJump - abs(vx*1.1);  // Vertikalnu brzinu mijenjamo ovisno o horizontalnoj
             onGround=false;
 
             //zvuk skoka ovisi o broju preskočenih platformi
-            if(currentPlatformNumber==previousPlatformNumber+1)//preskočena jedna platforma
+            if(abs(vy)<25)//preskočena jedna platforma
             {
               skok_jedna.play();
               if ( skok_jedna.position() == skok_jedna.length() )
@@ -791,7 +792,7 @@ class Character {
                 skok_jedna.rewind();
               }
             }
-            else if(currentPlatformNumber==previousPlatformNumber+2)//preskoceno dvije platforme
+            else if(abs(vy) < 30)//preskoceno dvije platforme
             {
               skok_nekoliko.play();
               if ( skok_nekoliko.position() == skok_nekoliko.length() )
@@ -799,7 +800,7 @@ class Character {
                 skok_nekoliko.rewind();
               }
             }
-            else if(currentPlatformNumber>previousPlatformNumber+2)//preskoceno više platformi
+            else  //preskoceno više platformi
             {
               skok_vise.play();
               if ( skok_vise.position() == skok_vise.length() )
@@ -809,7 +810,7 @@ class Character {
             }
 
             previousPlatformNumber = currentPlatformNumber;
-            startingJumpSpeed = vx; // Potrebno radi odabire sprite-a
+            startingJumpSpeed = vy; // Potrebno radi odabire sprite-a
             jumpedFromPlatform = true; // Oznacavamo da je skocio sa platforme a ne pao
 
             if (currentPlatformIndex >= 4 && screen.getLevel() == 0 ) // Ako prijedjemo cetvrtu platformu onda se ekran pocinje kretati i pali se timer
@@ -818,7 +819,6 @@ class Character {
             }
         }
 
-        vy = constrain(vy, -30, 30);
         posy+=vy;
 
         // Uvijek se krecemo malo prema dolje u skladu sa brzinog ekrana
@@ -1051,12 +1051,12 @@ class Character {
     }
 }
 
-int stanje=0, var=0, currentLetter=0, pickedOption=0, currentMenuOptionsCount;
+int stanje = 0, var=0, currentLetter=0, pickedOption=0, currentMenuOptionsCount;
 PFont font;
 PImage bg, cursorHarold, instructionsImage;
 Screen mainScreen;
 Character player;
-boolean leftKeyPressed = false, rightKeyPressed = false, downKeyPressed = false, upKeyPressed = false, spaceKeyPressed = false, enterReleased=false;
+boolean leftKeyPressed = false, rightKeyPressed = false, downKeyPressed = false, upKeyPressed = false, spaceKeyPressed = false, enterReleased=true;
 boolean usernameEntered = false;
 String pickedCharacter = "Harold";
 Leaderboards boards;
@@ -1072,14 +1072,16 @@ AudioPlayer in_game, splendid, superb, sweet, theme, try_again, wow, ledgeaudio 
 void setup()
 {
     size(1100, 900);
-    //font=createFont("ComicSansMS-BoldItalic-48.vlw", 32);
-    font = createFont("Georgia Bold", 32);
+    // font = loadFont("ComicSansMS-BoldItalic.vlw");
+    font = createFont("RoteFlora.ttf", 32);
+    // font = createFont("Georgia Bold", 32);
     colorMode(HSB);
     noStroke();
 
     cursorHarold = loadImage("cursorHarold.png");
     cursorHarold.resize(40, 0);
 
+    bg=loadImage("background.png");
 
     boards = new Leaderboards();
     minim= new Minim(this);
@@ -1108,6 +1110,7 @@ void setup()
     wow=minim.loadFile("wow.wav");
     ledgeaudio=minim.loadFile("ledge.wav");
 
+
 }
 
 void draw()
@@ -1132,13 +1135,13 @@ void startScreen()
     if(pickedCharacter=="dave")pickedCharacter="Dave";
     if(pickedCharacter=="harold")pickedCharacter="Harold";
 
-    bg=loadImage("background1.jpg");
+    
     bg.resize(width, height);
     background(bg);
 
     textAlign(LEFT);
     textFont(font);
-    textSize(40);
+    textSize(50);
     fill(color(var, 255, 255));
     var++;
     if (var>255)var=0;
@@ -1147,7 +1150,7 @@ void startScreen()
     text("Instructions", 70, 3*height/10);
     text("Exit ", 70, 4*height/10);
 
-    image(cursorHarold, 25, (pickedOption+1)*height/10 - 2*cursorHarold.height/3);
+    image(cursorHarold, 25, (pickedOption+1)*height/10 - 2*cursorHarold.height/3 - 10);
 
     textAlign(CENTER);
     textSize(130);
@@ -1199,11 +1202,17 @@ void instructionsScreen()
 {
     image(instructionsImage, 0, 0);
     if(keyPressed && (key != ENTER || (key == ENTER && enterReleased))) // Na bilo koji klik vrati se na main menu
+    {
+        enterReleased = false;
         stanje = 0;
+    }
+        
 }
 
 void gameScreen()
 {
+    imageMode(CENTER);
+
     background(100);
 
     mainScreen.draw();
@@ -1221,6 +1230,7 @@ void gameScreen()
       in_game.play();
     }
 
+    imageMode(CORNER);
 }
 
 void endScreen()
@@ -1245,7 +1255,7 @@ void endScreen()
     text("Exit", 70, height/3+540);
     textAlign(CENTER);
 
-    image(cursorHarold, 25, (pickedOption)*50 + height/3+440 - cursorHarold.height/2);
+    image(cursorHarold, 25, (pickedOption)*50 + height/3+440 - 2*cursorHarold.height/3 - 10);
 
     in_game.pause();
     jo.close();
@@ -1310,11 +1320,12 @@ void pauseScreen()
     mainScreen.pauseScreen();
     player.pauseScreen();
 
-    fill(0, 80);
+    fill(0, 200);
     rect(0, 0, width, height);
 
 
     fill(255);
+    textFont(font);
     textSize(150);
     text("PAUSED", width/2, 200);
 

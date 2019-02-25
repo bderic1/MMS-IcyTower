@@ -1,12 +1,12 @@
 Highest combo
-1 29 27 stj
-2 62 26 =+g
-3 25 25 KAC
-4 21 16 zvo
-5 14 16 +ad
+1 92 62 ZVO
+2 56 31 oov
+3 29 27 stj
+4 134 27 AAA
+5 62 26 =+g
 Highest floor
-1 118 14 Bub
-2 114 12 zrt
-3 92 13 +ad
-4 62 26 =+g
-5 58 11 dan
+1 134 27 AAA
+2 118 14 Bub
+3 114 12 zrt
+4 92 13 +ad
+5 92 62 ZVO

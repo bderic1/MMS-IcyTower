@@ -13,7 +13,6 @@ import ddf.minim.*;
 // FIXME: "rupiduru" zvuk mi ne zavrsava
 // TODO: Vidit sto bi moglo bit uzrog povremenih lagova (Treba vidit mogucnost da je ili crtanje platformi ili rewind zvukova)
 // TODO: Mozda jos malo profinjavanja kontrola
-// TODO: (?) Mozda vidit da se slova bolje vide na neki nacin. Bilo bi lijepo da moze veci spacing al nema toga u processingu. Mozda probati nac neki slican ali ispunjen.
 
 // Ljestvice najboljih rezultata
 // Format je "placement floor combo player"
@@ -52,9 +51,13 @@ class Leaderboards {
     {
         int br = 0; // Prati jesu li sruseni rekordi
         HashMap<String, String> el;
-        indexOfBestCombo = -1;
+
+        // Ovdje spremamo indekse elemenata u ArrayList ciji su rekordi sruseni pa tako da znamo gdje ubaciti novi element tj. novi rekord 
+        // (-1 znaci da nije srusen rekord u toj kategoriji)
+        indexOfBestCombo = -1; 
         indexOfBestFloor = -1;
 
+        // Provjerava jel srusen rekord za najveci combo
         for( int i = 0; i < bestCombo.size(); ++i)
         {
             el = bestCombo.get(i);
@@ -68,6 +71,7 @@ class Leaderboards {
             }
         }
 
+        // Jel srusen rekord za najveci kat
         for( int i = 0; i < bestFloor.size(); ++i)
         {
             el = bestFloor.get(i);
@@ -89,6 +93,7 @@ class Leaderboards {
     {
         HashMap<String, String> el;
 
+        // Provjerava ako je srusen rekord i onda ubacuje element na indeks prvog rekorda koji je srusen i izbacuje zadnjeg sa ljestvice
         if(indexOfBestCombo >= 0)
         {
             int i = indexOfBestCombo;
@@ -102,7 +107,7 @@ class Leaderboards {
             bestCombo.remove(bestCombo.size() - 1);
         }
 
-
+        // Analogno kao gore ali rekordi za katove
         if(indexOfBestFloor >= 0)
         {
             int i = indexOfBestFloor;
@@ -124,7 +129,7 @@ class Leaderboards {
     void saveToFile()
     {
         HashMap<String, String> el;
-        String[] outputString = new String[12];
+        String[] outputString = new String[12]; // Spremamo u 12 elemenata pa ce leaderboards.txt imat 12 redova
 
         outputString[0] = "Highest combo";
         for( int i = 0; i < 5; ++i)
@@ -185,7 +190,7 @@ class Leaderboards {
             tempY += 35;
             }
 
-        textAlign(CENTER);
+        textAlign(CENTER); // Vracamo na CENTER radi ostalih tekstova
 
 
     }
@@ -211,6 +216,7 @@ class Platform {
         return platformNumber;
     }
 
+    // Provjerava stoji li igrac na platformi
     boolean isOnPlatform(Character player)
     {
         if (player.verticalSpeed() < 0) return false; // Ako igrac ide prema gore onda ne pada na platformu
@@ -244,7 +250,7 @@ class Platform {
 
     void draw()
     {
-        // Crtaj platfomu
+        // Crtaj platfomu ovisno o kojem se katu radi
         if(platformNumber<100)
         {
           fill(#6666ff);
@@ -284,7 +290,7 @@ class Platform {
           ellipse(x+5*w/6, y+20, 14,14);
 
         }
-        else if(platformNumber<400)//metalna  platforma
+        else if(platformNumber<400) // Metalna  platforma
         {
           stroke(#000000);
           fill(#007a99);
@@ -298,7 +304,7 @@ class Platform {
 
 
         }
-        else if(platformNumber<500)//žvakaća guma
+        else if(platformNumber<500) // Žvakaća guma
         {
           int ost=(int)w%18;
           if(ost!=0)
@@ -325,7 +331,7 @@ class Platform {
 
           }
         }
-        else if(platformNumber<600)//trokuti
+        else if(platformNumber<600) // Trokuti
         {
           fill(#cc33ff);
           for(int i=0; i<(w/10)-1; i++)
@@ -336,12 +342,17 @@ class Platform {
           fill(#008000);
           rect(x, y, w, 20, 8);
         }
+
         // Na svaku desetu napisi broj platforme
         if (platformNumber % 10 == 0)
         {
-            fill(0);
-            rect(x + w/2 - 20, y + 2*h/3 - 15, 40, 40, 10);
-            textFont(createFont("Arial Bold", 17));
+            fill(#993300);
+            rect(x + w/2 - 20, y + 2*h/3 - 15, 40, 40, 5);
+            stroke(0);
+            line(x + w/2 - 20, y + 2*h/3 - 15 + 10, x + w/2 + 20, y + 2*h/3 - 15 + 10);
+            line(x + w/2 - 20, y + 2*h/3 - 15 + 20, x + w/2 + 20, y + 2*h/3 - 15 + 20);
+            line(x + w/2 - 20, y + 2*h/3 - 15 + 30, x + w/2 + 20, y + 2*h/3 - 15 + 30);
+            textFont(createFont("Arial Bold", 20));
             fill(255);
             text(str(platformNumber), x + w/2, y + 2*h/3 + 10);
         }
@@ -363,11 +374,12 @@ class Screen {
     private int noOfPlatforms = 6; // Koliko platformi će biti na ekranu u isto vrijeme
     private float screenStart = 150, screenEnd = width - screenStart; // Imat cemo rubove na ekranu pa nam ovo treba (Height ne trebamo jer su rubovi samo lijevo i desno)
     private float maxPlatformWidth = 400;
+
     //podaci za sat
     int cx, cy, prvi_prolazak=0;
     float secondsRadius,clockDiameter ;
     String comboWord;
-    int comboWordFrameCount;
+    int comboWordFrameCount, comboWordSize;
 
     Screen()
     {
@@ -438,7 +450,7 @@ class Screen {
         if(level == 0) return; // Ako jos nije pocelo onda ne radi nista
 
         levelTimer++;
-        if(levelTimer == 1800) // 30 sekundi
+        if(levelTimer == 1800) // 30 sekundi (1800 frameova kada je 60 FPS)
         {
             level++;
             levelTimer = 0;
@@ -454,16 +466,14 @@ class Screen {
         if(comboWordFrameCount > 0)
         {
             textAlign(CENTER);
-            textFont(font);
-            fill(color(var, 255, 255));
             var++;
             if (var>255)var=0;
-            textSize(60);
-            text(comboWord, height/2, width/2);
+            textWithOutline(comboWord, height/2, width/2, color(var, 255, 255), comboWordSize);
             comboWordFrameCount--;
         }
     }
 
+    // Na kraju comboa postavlja rijec koja se crta (good, wow i sl.) i postavlja koliko frameova ce se pokazivati 
     void napisi(String s)
     {
         comboWord = s;
@@ -549,12 +559,9 @@ class Screen {
       //ispis obavijesti o ubrzavanju i postavljanje zvuka opomene
       float r=random(-2,2);
       textAlign(CENTER);
-      textFont(font);
-      fill(color(var, 255, 255));
       var++;
       if (var>255)var=0;
-      textSize(60);
-      text("Hurry up!", height/2+r, width/3+r);
+      textWithOutline("Hurry up!", height/2+r, width/3+r, color(var, 255, 255), 60);
       hurry_up.play();
       if ( hurry_up.position() == hurry_up.length() )
       {
@@ -572,6 +579,7 @@ class Screen {
         if(level<10) //recimo da ubrza 10 puta, a onda ide tom brzinom
           speed = level;
         else speed=10;
+
         if (playerPosY < height/4 && playerVerticalSpeed < 0) // Ako je blizu vrhu i krece se prema gore
             speed += abs(playerVerticalSpeed) * map(playerPosY, height/4, -10, 0, 1); // Racunamo koliko ce se pomaknuti
 
@@ -620,7 +628,7 @@ class Screen {
     void setLevel(int v)
     {
         level = v;
-        if(v==1&&prvi_prolazak==0)
+        if(v==1 && prvi_prolazak==0)
         {
           prvi_prolazak=1;
         }
@@ -689,7 +697,8 @@ class Character {
 
     void setSprite()
     {
-        if(isInCombo && abs(startingJumpSpeed) >= 30 && jumpedFromPlatform) // Crta "combo" sprite i rotira ga
+        // Crta "combo" sprite i rotira ga ako smo unutar comboa i brzo se krecemo i uz to smo skocili, a ne pali, sa platforme
+        if(isInCombo && abs(startingJumpSpeed) >= 30 && jumpedFromPlatform) 
         {
             sprite = sprites.get("combo");
             pushMatrix();
@@ -702,54 +711,54 @@ class Character {
         }
         else
         {
-        if (onGround)
-        {
-            if (abs(vx) < 1) // Ako se ne krece i stoji na zemlji
+            if (onGround)
             {
-
-                // Ako je igrac na rubu platforme
-                int isPlayerOnLedge = screen.getPlatforms().get(currentPlatformIndex).isOnLedge(this);
-                if (abs(isPlayerOnLedge) == 1)
+                if (abs(vx) < 1) // Ako je na zemlji i ne krece se
                 {
-                    String image = "-ledge-"+str(ledge/10);
-                    ledge = (ledge+1)%20; // Mijenjamo sprite za rub svako 10 frameova
-                    image = ((isPlayerOnLedge == -1) ? "left" : "right") + image;
-                    sprite = sprites.get(image);
-                    ledgeaudio.play();
+
+                    // Ako je igrac na rubu platforme
+                    int isPlayerOnLedge = screen.getPlatforms().get(currentPlatformIndex).isOnLedge(this);
+                    if (abs(isPlayerOnLedge) == 1)
+                    {
+                        String image = "-ledge-"+str(ledge/10);
+                        ledge = (ledge+1)%20; // Mijenjamo sprite za rub svako 10 frameova
+                        image = ((isPlayerOnLedge == -1) ? "left" : "right") + image;
+                        sprite = sprites.get(image);
+                        ledgeaudio.play();
+                    } else
+                    {
+                        ledgeaudio.rewind();
+                        sprite = sprites.get("standing-"+str(standing/20));
+                        standing = (standing+1)%60; // Mijenjamo sprite za stajanje svako 20 frameova
+                    }
                 } else
                 {
-                    ledgeaudio.rewind();
-                    sprite = sprites.get("standing-"+str(standing/20));
-                    standing = (standing+1)%60; // Mijenjamo sprite za stajanje svako 20 frameova
-                }
-            } else
-            {
-                String image = "run-"+str(run/10);
-                run = (run+1)%40; // Mijenjamo sprite za trcanje svako 10 frameova
-                image += (vx < 0) ? "-left" : "-right";
-                sprite = sprites.get(image);
-            }
-        } else
-        {
-            if (abs(vx) < 1) // Ako se ne krece desno ili lijevo
-            {
-                sprite = sprites.get("jumping");
-            } else
-            {
-
-                if (abs(vy) < 3) // Ako leti i u vrhu je skoka
-                {
-                    sprite = sprites.get("jumping-top" + ( (vx < 0) ? "-left" : "-right") );
-                } else
-                {
-                    String image = (vy < 0) ? "jumping" : "falling";
+                    String image = "run-"+str(run/10);
+                    run = (run+1)%40; // Mijenjamo sprite za trcanje svako 10 frameova
                     image += (vx < 0) ? "-left" : "-right";
                     sprite = sprites.get(image);
                 }
+            } else
+            {
+                if (abs(vx) < 1) // Ako se ne krece desno ili lijevo
+                {
+                    sprite = sprites.get("jumping");
+                } else
+                {
+
+                    if (abs(vy) < 3) // Ako leti i u vrhu je skoka
+                    {
+                        sprite = sprites.get("jumping-top" + ( (vx < 0) ? "-left" : "-right") );
+                    } else
+                    {
+                        String image = (vy < 0) ? "jumping" : "falling";
+                        image += (vx < 0) ? "-left" : "-right";
+                        sprite = sprites.get(image);
+                    }
+                }
             }
-        }
-        sprite.resize(0, 70);
-        image(sprite, posx, posy);
+            sprite.resize(0, 70);
+            image(sprite, posx, posy);
         }
 
     }
@@ -779,10 +788,7 @@ class Character {
         // Crtamo counter za combo ako se desava combo
         if(comboCount > 0)
         {
-            textFont(font);
-            textSize(24);
-            fill(255);
-            text(str(comboCount) + "\n FLOORS!", 50, 270);
+            textWithOutline(str(comboCount) + "\n FLOORS!", 50, 270, 255, 24);
         }
 
 
@@ -795,10 +801,7 @@ class Character {
         rect(25, 50 + 180 - comboTimer, 20, comboTimer, 8);
 
         // Trenutni najveci combo
-        textFont(font);
-        textSize(25);
-        fill(255);
-        text("Best\ncombo:\n" + str(round(highestCombo)), 60, 650);
+        textWithOutline("Best\ncombo:\n" + str(round(highestCombo)), 60, 650, 255, 25);
 
         //TODO: brisati (Framerate)
         textFont(createFont("Arial Bold", 18));
@@ -813,11 +816,11 @@ class Character {
         // Horizontalne kretnje
         if (leftKeyPressed)
         {
-            vx -= (vx > 0) ? 3*ax : ax; // Ako se vec krece desno onda da se malo brze krece prema lijevo pa da brze uspori
+            vx -= (vx > 0) ? 4*ax : ax; // Ako se vec krece desno onda da se malo brze krece prema lijevo pa da brze uspori
         }
         if (rightKeyPressed)
         {
-            vx += (vx < 0) ? 3*ax : ax;
+            vx += (vx < 0) ? 4*ax : ax;
         }
         if (onGround && !leftKeyPressed && !rightKeyPressed)
         {
@@ -967,7 +970,10 @@ class Character {
         {
             if (pl.isOnPlatform(this))
             {
+                // Prvo spremamo index platforme na kojoj lik stoji tako da lako provjeravamo stoji li lik na rubu platforme ili ne
                 player.setCurrentPlatformIndex(screen.getPlatforms().indexOf(pl));
+
+                // Spremamo trenutnu platformu radi comoboa i broja katova koji su prijedjeni
                 player.setCurrentPlatformNumber(pl.getPlatformNumber());
                 return true;
             }
@@ -975,7 +981,6 @@ class Character {
         return false;
     }
 
-     // Dijelimo sa 2 kad je combo sprite jer je on centriran a ne pocinje od ruba
     float getSpriteWidth()
     {
         return sprite.width;
@@ -1042,6 +1047,7 @@ class Character {
         {
           good.rewind();
         }
+        mainScreen.comboWordSize = 60;
         mainScreen.napisi("Good!");
       }
       else if(7<=combo && combo<=14)
@@ -1051,7 +1057,8 @@ class Character {
           {
           sweet.rewind();
           }
-         mainScreen.napisi("Sweet!");
+        mainScreen.comboWordSize = 70;
+        mainScreen.napisi("Sweet!");
       }
       else if(15<=combo && combo<=24)
       {
@@ -1060,6 +1067,7 @@ class Character {
           {
           great.rewind();
           }
+        mainScreen.comboWordSize = 80;
         mainScreen.napisi("Great!");
       }
       else if(25<=combo && combo<=34)
@@ -1069,6 +1077,7 @@ class Character {
           {
           superb.rewind();
           }
+        mainScreen.comboWordSize = 90;
         mainScreen.napisi("Super!");
       }
       else if(35<=combo && combo<=49)
@@ -1078,6 +1087,7 @@ class Character {
           {
           wow.rewind();
           }
+        mainScreen.comboWordSize = 100;
         mainScreen.napisi("WOW!");
       }
       else if(50<=combo && combo<=69)
@@ -1087,7 +1097,8 @@ class Character {
           {
           amazing.rewind();
           }
-       mainScreen.napisi("AMAZING!");
+        mainScreen.comboWordSize = 110;
+        mainScreen.napisi("AMAZING!");
       }
       else if(70<=combo && combo<=99)
       {
@@ -1096,6 +1107,7 @@ class Character {
           {
           extreme.rewind();
           }
+        mainScreen.comboWordSize = 120;
         mainScreen.napisi("EXTREME!");
       }
       else if(100<=combo && combo<=139)
@@ -1105,6 +1117,7 @@ class Character {
           {
           fantastic.rewind();
           }
+        mainScreen.comboWordSize = 130;
         mainScreen.napisi("FANTASTIC!");
       }
       else if(140<=combo && combo<=199)
@@ -1114,6 +1127,7 @@ class Character {
           {
           splendid.rewind();
           }
+        mainScreen.comboWordSize = 140;
         mainScreen.napisi("SPLENDID!");
       }
       else if(combo>=199)
@@ -1123,6 +1137,7 @@ class Character {
           {
           no_way.rewind();
           }
+        mainScreen.comboWordSize = 150;
         mainScreen.napisi("NO WAY!");
       }
 
@@ -1131,7 +1146,7 @@ class Character {
 }
 
 int stanje = 0, var=0, currentLetter=0, pickedOption=0, currentMenuOptionsCount;
-PFont font;
+PFont icyFont, icyFontFill;
 PImage bg, cursorHarold, instructionsImage;
 Screen mainScreen;
 Character player;
@@ -1151,9 +1166,8 @@ AudioPlayer in_game, splendid, superb, sweet, theme, try_again, wow, ledgeaudio,
 void setup()
 {
     size(1100, 900);
-    // font = loadFont("ComicSansMS-BoldItalic.vlw");
-    font = createFont("RoteFlora.ttf", 32);
-    // font = createFont("Georgia Bold", 32);
+    icyFont = createFont("RoteFlora.ttf", 32);
+    icyFontFill = createFont("RoteFloraFill.ttf", 32);
     colorMode(HSB);
     noStroke();
 
@@ -1207,44 +1221,44 @@ void draw()
         instructionsScreen();
 }
 
-
+// stanje je 0
 void startScreen()
 {
-    currentMenuOptionsCount = 4;
-
+    // Da pise ispravno pri ponovnom vracanju u main menu
     if(pickedCharacter=="dave")pickedCharacter="Dave";
     if(pickedCharacter=="harold")pickedCharacter="Harold";
-
 
     bg.resize(width, height);
     background(bg);
 
     textAlign(LEFT);
-    textFont(font);
-    textSize(50);
-    fill(color(var, 255, 255));
+
+    // Za mijenjanje boje
     var++;
     if (var>255)var=0;
-    text("Play", 70, 1*height/10);
-    text("Character: <- " + pickedCharacter + " ->", 70, 2*height/10);
-    text("Instructions", 70, 3*height/10);
-    text("Exit ", 70, 4*height/10);
+
+    currentMenuOptionsCount = 4;
+    
+    textWithOutline("Play", 70, 1*height/10,                                 color(var, 255, 255), 50);
+    textWithOutline("Character: <" + pickedCharacter + ">", 70, 2*height/10, color(var, 255, 255), 50);
+    textWithOutline("Instructions", 70, 3*height/10,                         color(var, 255, 255), 50);
+    textWithOutline("Exit ", 70, 4*height/10,                                color(var, 255, 255), 50);
 
     image(cursorHarold, 25, (pickedOption+1)*height/10 - 2*cursorHarold.height/3 - 10);
 
     textAlign(CENTER);
-    textSize(130);
     rotate(PI/6);
-    text("ICY", 4*width/5, -height/5);
-    text("TOWER", 4*width/5, -height/5+160);
+    textWithOutline("ICY", 4*width/5, -height/5,       color(var, 255, 255), 130);
+    textWithOutline("TOWER", 4*width/5, -height/5+160, color(var, 255, 255), 130);
     rotate(-PI/6);
 
     //ako smo na startScreen dosli iz pauze>ponovni odabir main menua, moramo zaustaviti in game pjesmu i pustiti theme
     if(in_game.isPlaying())
-      {
+    {
         in_game.pause();
-     }
-      //puštamo theme beskonačno puta
+    }
+
+    //puštamo theme beskonačno puta
     theme.play();
     if ( theme.position() == theme.length() )
     {
@@ -1253,50 +1267,45 @@ void startScreen()
     }
     boards.drawOnStartScreen();
 
-    if ( keyPressed && key == ENTER && enterReleased && (pickedOption == 0 || pickedOption == 2 || pickedOption == currentMenuOptionsCount - 1) )
+    if ( keyPressed && key == ENTER && enterReleased  )
     {
-      enterReleased=false;
-      playSelectSound();
-        if(pickedOption == currentMenuOptionsCount - 1) // Exit ce uvijek biti zadnja
-        {
-            myExit();
-        }
-
-        if( pickedOption == 2 )
-        {
-            instructionsImage = loadImage("instructions.png");
-            instructionsImage.resize(width, height);
-            stanje = 4;
-            return;
-
-        }
-
-        pickedCharacter = (pickedCharacter == "Dave") ? "dave" : "harold";
-        mainScreen = new Screen();
-        player = new Character(mainScreen, pickedCharacter, boards);
-        stanje = 1;
-        pickedOption = 0; // Resetiramo ga na nulu
-    }
-}
-
-void instructionsScreen()
-{
-    image(instructionsImage, 0, 0);
-    if(keyPressed && (key != ENTER || (key == ENTER && enterReleased))) // Na bilo koji klik vrati se na main menu
-    {
-        enterReleased = false;
+        enterReleased=false;
         playSelectSound();
-        stanje = 0;
-    }
 
+        switch (pickedOption) {
+            // Zapocni igru
+            case 0:
+                pickedCharacter = (pickedCharacter == "Dave") ? "dave" : "harold";
+                mainScreen = new Screen();
+                player = new Character(mainScreen, pickedCharacter, boards);
+                stanje = 1;
+                pickedOption = 0; // Resetiramo ga na nulu
+            break;
+            //Mijenjanje lika
+            case 1:
+                pickedCharacter = (pickedCharacter == "Harold") ? "Dave" : "Harold";
+                return;
+            // Instrukcije
+            case 2:
+                instructionsImage = loadImage("instructions.png");
+                instructionsImage.resize(width, height);
+                stanje = 4;
+                return;
+            // Exit ce uvijek biti zadnji na popisu
+            default:
+                myExit();
+            break;  
+        }
+        
+        
+    }
 }
 
+// stanje je 1
 void gameScreen()
 {
     imageMode(CENTER);
-    //stavila sam ovu svjetliju, djeluje mi malo veselije
     background(#75a3a3);
-    //background(100);
 
     mainScreen.draw();
 
@@ -1316,9 +1325,12 @@ void gameScreen()
     imageMode(CORNER);
 }
 
+// stanje je 2
 void endScreen()
 {
-    background(100);
+    background(#75a3a3);
+
+    // Crtamo ekrane iza zadnjeg kao da je pauzirano
     mainScreen.pauseScreen();
     player.pauseScreen();
 
@@ -1329,7 +1341,7 @@ void endScreen()
     rect(width/6, 2*height/6 - 50, 4*width/6, 3*height/6, 16);
 
     textAlign(CENTER);
-    textFont(font);
+    textFont(icyFont);
     fill(color(var, 255, 255));
     var++;
     if (var>255)var=0;
@@ -1339,16 +1351,14 @@ void endScreen()
     currentMenuOptionsCount = 3;
 
     textAlign(LEFT);
-    textSize(50);
-    text("Play again", width/3, height/3+50);
-    text("Main menu", width/3, height/3+50 + 50);
-    text("Exit", width/3, height/3+50 + 100);
+    textWithOutline("Play again", width/3, height/3+50,     color(var, 255, 255), 50);
+    textWithOutline("Main menu", width/3, height/3+50 + 50, color(var, 255, 255), 50);
+    textWithOutline("Exit", width/3, height/3+50 + 100,     color(var, 255, 255), 50);
 
     image(cursorHarold, width/3 - 45, (pickedOption)*50 + height/3+50 - 2*cursorHarold.height/3 - 10);
 
-    textSize(35);
-    fill(255);
-    text("Best combo: " + str(round(player.getHighestCombo())) + "\nBest floor: " + str(round(player.getCurrentPlatformNumber())), width/6 + 20, 4*height/6);
+    textWithOutline("Best combo: " + str(round(player.getHighestCombo())) + 
+                    "\nBest floor: " + str(round(player.getCurrentPlatformNumber())), width/6 + 20, 4*height/6, 255, 35);
 
     textAlign(CENTER);
 
@@ -1364,20 +1374,19 @@ void endScreen()
         {
           novi_high_score.pause();
         }
+
         fill(#800040);
         rect(width/7, height/7, 5*width/7, 5*height/7, 10);
 
+        // Upisujemo username slovo po slovo
         char[] us = username.clone();
-        if((frameCount/10)%2 == 0) us[currentLetter] = '_'; // Da simulira koje slovo se trenutno bira
+        if((frameCount/10)%2 == 0) us[currentLetter] = '_'; // Indikator za trenutno slovo koje odabiremo
 
-        fill(255);
-        textSize(40);
-        text("NEW RECORD\nWrite your name:\n" + String.valueOf(us), width/2, 2*height/7);
+        textWithOutline("NEW RECORD\nWrite your name:\n" + String.valueOf(us), width/2, 2*height/7, 255, 40);
 
-        textSize(35);
-        fill(255);
-        text("combo: " + str(round(player.getHighestCombo())) + "\nfloor: " + str(round(player.getCurrentPlatformNumber())), 2*width/7, 4*height/7);
+        textWithOutline("combo: " + str(round(player.getHighestCombo())) + "\nfloor: " + str(round(player.getCurrentPlatformNumber())), 2*width/7, 4*height/7, 255, 35);
 
+        // Dodaj rekord
         if (stanje == 2 && !usernameEntered && keyPressed && key == ENTER && enterReleased)
         {
             enterReleased=false;
@@ -1389,6 +1398,7 @@ void endScreen()
         pickedOption = 0; // Osiguravamo da se cursor ne mice dok je otvoren prozor za combo
     }
 
+    // Ako nema rekorda ili je vec upisan i ako odaberemo neku opciju na end screen
     if ((!player.isThereANewRecord() || usernameEntered) && keyPressed && key == ENTER && enterReleased)
     {
         novi_high_score.rewind();
@@ -1401,6 +1411,7 @@ void endScreen()
             myExit();
         }
 
+        // Vrati se u main menu
         if(pickedOption == 1)
         {
             stanje = 0;
@@ -1408,6 +1419,7 @@ void endScreen()
             return;
         }
 
+        // Igraj opet
         reset();
         usernameEntered = false;
         pickedOption = 0;
@@ -1416,6 +1428,7 @@ void endScreen()
 
 }
 
+// stanje je 3
 void pauseScreen()
 {
     background(100);
@@ -1425,22 +1438,30 @@ void pauseScreen()
     fill(0, 200);
     rect(0, 0, width, height);
 
+    textWithOutline("PAUSED", width/2, 200, 255, 150);
 
-    fill(255);
-    textFont(font);
-    textSize(150);
-    text("PAUSED", width/2, 200);
-
-    textSize(60);
-    text("Press 'R' to reset.", width/2, 400);
-    text("Press 'M' to go to main menu.", width/2, 500);
-    text("Press 'P' to continue.", width/2, 600);
+    textWithOutline("Press 'R' to reset.", width/2, 400, 255, 50);
+    textWithOutline("Press 'M' to go to main menu.", width/2, 500, 255, 50);
+    textWithOutline("Press 'P' to continue.", width/2, 600, 255, 50);
 
     if (keyPressed && (key == 'r' || key == 'R'))
     {
         reset();
     } else if (keyPressed && (key == 'm' || key == 'M'))
     {
+        stanje = 0; // Prebaci na main menu
+    }
+
+}
+
+// stanje je 4
+void instructionsScreen()
+{
+    image(instructionsImage, 0, 0);
+    if(keyPressed && (key != ENTER || (key == ENTER && enterReleased))) // Na 'ENTER' se vrati u main menu
+    {
+        enterReleased = false;
+        playSelectSound();
         stanje = 0;
     }
 
@@ -1467,6 +1488,21 @@ void playSelectSound()
     {
         menu_select.rewind();
     }
+}
+
+void textWithOutline(String message, float x, float y, int myColor, int size) 
+{ 
+  // Crta se unutarnji dio prvo 
+  fill(myColor); 
+  textFont(icyFontFill);
+  textSize(size);
+  text(message, x, y); 
+
+  // 'Outline'
+  fill(0);
+  textFont(icyFont);
+  textSize(size);
+  text(message, x, y);
 }
 
 // Ako su pritisnute tipke za lijevo i desno, one su CODED pa moramo ovako
@@ -1501,9 +1537,9 @@ void keyPressed() {
         if(stanje == 0 && (keyCode==LEFT || keyCode==RIGHT) && pickedOption == 1)
         {
             pickedCharacter = (pickedCharacter == "Harold") ? "Dave" : "Harold";
+            playSelectSound();
         }
-
-        if((stanje == 0 || stanje == 2) && (keyCode==UP || keyCode==DOWN || (stanje == 0 && (keyCode==LEFT || keyCode==RIGHT) && pickedOption == 1)) )
+        else if((stanje == 0 || stanje == 2) && (keyCode==UP || keyCode==DOWN || (stanje == 0 && (keyCode==LEFT || keyCode==RIGHT) && pickedOption == 1)) )
         {
             menu_option.play();
             if ( menu_option.position() == menu_option.length() )

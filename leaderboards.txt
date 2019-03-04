@@ -1,12 +1,12 @@
 Highest combo
-1 324 85 zvo
-2 139 67 AAA
-3 92 62 ZVO
-4 72 47 zvo
-5 62 43 zvo
+1 205 111 bbb
+2 208 104 bbb
+3 119 95 bbb
+4 324 85 zvo
+5 139 67 AAA
 Highest floor
 1 324 85 zvo
-2 143 0 AAA
-3 139 67 AAA
-4 134 27 AAA
-5 118 14 Bub
+2 208 104 bbb
+3 205 111 bbb
+4 143 0 AAA
+5 139 67 AAA
